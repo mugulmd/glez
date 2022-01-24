@@ -1,5 +1,6 @@
+#include "glez_pch.h"
+
 #include "global.h"
-#include "log.h"
 
 namespace glez {
 

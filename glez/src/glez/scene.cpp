@@ -1,5 +1,6 @@
+#include "glez_pch.h"
+
 #include "scene.h"
-#include "log.h"
 
 #include <glm/vec3.hpp>
 

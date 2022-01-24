@@ -1,7 +1,6 @@
-#include <cmath>
+#include "glez_pch.h"
 
 #include "camera.h"
-#include "log.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 

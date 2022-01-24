@@ -1,3 +1,5 @@
+#include "glez_pch.h"
+
 #include "ray.h"
 
 namespace glez {
