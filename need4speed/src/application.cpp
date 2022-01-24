@@ -2,6 +2,6 @@
 
 int main(int argc, char** argv) 
 {
-	glez::sayHello();
+	glez::scene scene;
 	return 0;
 }
