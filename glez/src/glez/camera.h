@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core.h"
+#include "ray.h"
 
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
@@ -36,6 +37,9 @@ namespace glez {
 
 		inline glm::mat4& get_view() { return m_view; }
 		inline glm::mat4& get_proj() { return m_proj; }
+
+		glm::vec3 to_world(glm::vec2 screen_coords);
+		ray cast_ray_to(glm::vec2 screen_coords);
 
 	};
 

@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "camera.h"
 #include "log.h"
 
@@ -69,6 +71,27 @@ namespace glez {
 		m_near = z_near;
 		m_far = z_far;
 		update_proj();
+	}
+
+	glm::vec3 camera::to_world(glm::vec2 screen_coords)
+	{
+		float x = 2 * (screen_coords.x / m_width) - 1;
+		float y = 1 - 2 * (screen_coords.y / m_height);
+		glm::vec3 x_axis = right();
+		glm::vec3 y_axis = glm::normalize(glm::cross(direction(), x_axis));
+		float ratio = std::tan(m_fov * 0.5f * 3.14f / 180.f);
+		return (x * x_axis + y * y_axis) * glm::distance(m_position, m_target) * ratio;
+	}
+
+	ray camera::cast_ray_to(glm::vec2 screen_coords)
+	{
+		float x = 2 * (screen_coords.x / m_width) - 1;
+		float y = 1 - 2 * (screen_coords.y / m_height);
+		glm::vec4 dir_clip(x, y, -1, 1);
+		glm::vec4 dir_eye = glm::inverse(m_proj) * dir_clip;
+		glm::vec4 dir_world = glm::inverse(m_view) * glm::vec4(dir_eye.x, dir_eye.y, -1, 0);
+		glm::vec3 dir = glm::normalize(glm::vec3(dir_world));
+		return ray(m_position, dir);
 	}
 
 }
