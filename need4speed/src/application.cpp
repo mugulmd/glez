@@ -2,6 +2,10 @@
 
 int main(int argc, char** argv) 
 {
-	glez::scene scene;
+	glez::init();
+
+	glez::scene* scene = new glez::scene();
+	delete scene;
+
 	return 0;
 }

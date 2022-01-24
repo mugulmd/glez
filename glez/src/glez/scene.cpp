@@ -1,18 +1,14 @@
 #include "scene.h"
-
 #include "log.h"
+
+#include <glm/vec3.hpp>
 
 namespace glez {
 
 	scene::scene()
 	{
-		log::init();
-		GLEZ_INFO("created new scene");
-	}
-
-	scene::~scene()
-	{
-		GLEZ_INFO("deleted scene");
+		m_camera = std::make_unique<camera>();
+		m_camera->set_view_props(glm::vec3(3, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
 }

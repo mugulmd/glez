@@ -16,15 +16,15 @@ namespace glez {
 	public:
 		static void init();
 
-		inline static std::shared_ptr<spdlog::logger>& getLogger() { return s_logger; }
+		inline static std::shared_ptr<spdlog::logger>& get_logger() { return s_logger; }
 
 	};
 
 }
 
 // Log macros
-#define GLEZ_TRACE(...)    ::glez::log::getLogger()->trace(__VA_ARGS__)
-#define GLEZ_INFO(...)     ::glez::log::getLogger()->info(__VA_ARGS__)
-#define GLEZ_WARN(...)     ::glez::log::getLogger()->warn(__VA_ARGS__)
-#define GLEZ_ERROR(...)    ::glez::log::getLogger()->error(__VA_ARGS__)
-#define GLEZ_CRITICAL(...) ::glez::log::getLogger()->critical(__VA_ARGS__)
+#define GLEZ_TRACE(...)    ::glez::log::get_logger()->trace(__VA_ARGS__)
+#define GLEZ_INFO(...)     ::glez::log::get_logger()->info(__VA_ARGS__)
+#define GLEZ_WARN(...)     ::glez::log::get_logger()->warn(__VA_ARGS__)
+#define GLEZ_ERROR(...)    ::glez::log::get_logger()->error(__VA_ARGS__)
+#define GLEZ_CRITICAL(...) ::glez::log::get_logger()->critical(__VA_ARGS__)
