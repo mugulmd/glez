@@ -14,7 +14,6 @@ namespace glez {
 		ray(glm::vec3 _origin, glm::vec3 _direction);
 
 		inline glm::vec3 at(float t) const { return origin + direction * t; }
-
 	};
 
 }

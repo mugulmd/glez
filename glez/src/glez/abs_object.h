@@ -1,27 +1,38 @@
 #pragma once
 
+#include <memory>
+#include <array>
+#include <list>
+
 #include "core.h"
+#include "quad_mesh.h"
+#include "texture.h"
+#include "render_buffer.h"
 
 namespace glez {
 
-	struct GLEZ_API vertex
-	{
-		// TODO
-	};
-
-	struct GLEZ_API half_edge
-	{
-		// TODO
-	};
-
-	struct GLEZ_API face
-	{
-		// TODO
-	};
-
 	class GLEZ_API abs_object
 	{
-		// TODO
+	protected:
+		quad_mesh& m_mesh;
+		texture& m_texture;
+		render_buffer m_buffer;
+
+	public:
+		virtual ~abs_object() = 0;
+		abs_object(quad_mesh& _mesh, texture& _texture, unsigned int _uv_dim);
+
+	protected:
+		std::list<render_buffer_listener*> m_buffer_listeners;
+		std::list<texture_listener*> m_tex_listeners;
+
+		void notify_render_buffer_listeners();
+		void notify_texture_listeners();
+
+	public:
+		void add_render_buffer_listener(render_buffer_listener *listener);
+		void add_texture_listener(texture_listener *listener);
+
 	};
 
 }

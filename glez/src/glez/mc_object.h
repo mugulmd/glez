@@ -5,9 +5,11 @@
 
 namespace glez {
 
-	class GLEZ_API mc_object : abs_object
+	class GLEZ_API mc_object : public abs_object
 	{
+	public:
 		// TODO
+
 	};
 
 }
