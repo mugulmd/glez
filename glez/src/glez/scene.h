@@ -10,10 +10,13 @@ namespace glez {
 	class GLEZ_API scene 
 	{
 	private:
-		std::unique_ptr<camera> m_camera;
+		camera* m_camera;
 
 	public:
 		scene();
+		virtual ~scene();
+
+		inline camera* get_camera() { return m_camera; }
 
 	};
 

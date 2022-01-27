@@ -14,13 +14,16 @@ namespace glez {
 	class GLEZ_API abs_object
 	{
 	protected:
-		quad_mesh& m_mesh;
-		texture& m_texture;
-		render_buffer m_buffer;
+		quad_mesh* m_mesh;
+		texture* m_texture;
+		render_buffer* m_buffer;
 
 	public:
 		virtual ~abs_object() = 0;
-		abs_object(quad_mesh& _mesh, texture& _texture, unsigned int _uv_dim);
+		abs_object(quad_mesh* _mesh, texture* _texture, unsigned int _uv_dim);
+
+		inline texture* get_texture() { return m_texture; }
+		inline render_buffer* get_render_buffer() { return m_buffer; }
 
 	protected:
 		std::list<render_buffer_listener*> m_buffer_listeners;

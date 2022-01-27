@@ -131,11 +131,34 @@ namespace glez {
 		m_faces.push_back(face);
 	}
 
-	std::shared_ptr<quad_mesh> quad_mesh::make_cube()
+	quad_mesh* quad_mesh::make_plane()
 	{
-		std::shared_ptr<quad_mesh> mesh = std::make_shared<quad_mesh>();
+		quad_mesh* mesh = new quad_mesh();
 
-		std::vector<glm::vec3> positions{
+		std::array<glm::vec3, 4> positions{
+			glm::vec3(-1, 1, 0),
+			glm::vec3(1, 1, 0),
+			glm::vec3(1, -1, 0),
+			glm::vec3(-1, -1, 0)
+		};
+
+		std::array<std::shared_ptr<vertex>, 4> vertices;
+		for (size_t i = 0; i < 4; i++) {
+			vertices[i] = std::make_shared<vertex>(positions[i]);
+			mesh->add_vertex(vertices[i]);
+		}
+
+		std::shared_ptr<quad_face> f = quad_face::make_face(vertices, glm::vec3(0, 0, 1));
+		mesh->add_face(f);
+
+		return mesh;
+	}
+
+	quad_mesh* quad_mesh::make_cube()
+	{
+		quad_mesh* mesh = new quad_mesh();
+
+		std::array<glm::vec3, 8> positions{
 			glm::vec3(-1, 1, -1), 
 			glm::vec3(-1, 1, 1),
 			glm::vec3(-1, -1, 1),
@@ -146,22 +169,22 @@ namespace glez {
 			glm::vec3(1, -1, 1)
 		};
 
-		std::vector<std::shared_ptr<vertex>> vertices(8);
+		std::array<std::shared_ptr<vertex>, 8> vertices;
 		for (size_t i = 0; i < 8; i++) {
 			vertices[i] = std::make_shared<vertex>(positions[i]);
 			mesh->add_vertex(vertices[i]);
 		}
 
-		std::vector<std::array<size_t, 4>> corners_indices{
-			{0, 1, 2, 3}, 
-			{0, 4, 4, 1}, 
-			{5, 4, 6, 7}, 
-			{1, 5, 7, 2}, 
-			{2, 7, 6, 3}, 
-			{3, 6, 4, 0}
+		std::array<std::array<size_t, 4>, 6> corners_indices{
+			std::array<size_t, 4>{0, 1, 2, 3},
+			std::array<size_t, 4>{0, 4, 4, 1},
+			std::array<size_t, 4>{5, 4, 6, 7},
+			std::array<size_t, 4>{1, 5, 7, 2},
+			std::array<size_t, 4>{2, 7, 6, 3},
+			std::array<size_t, 4>{3, 6, 4, 0}
 		};
 
-		std::vector<glm::vec3> normals{
+		std::array<glm::vec3, 6> normals{
 			glm::vec3(-1, 0, 0),
 			glm::vec3(0, 1, 0),
 			glm::vec3(1, 0, 0),

@@ -16,7 +16,7 @@ namespace glez {
 	public:
 		virtual ~texture_listener() {}
 
-		virtual void on_texture_change(const texture& _texture) = 0;
+		virtual void on_texture_change(texture* _texture) = 0;
 
 	};
 

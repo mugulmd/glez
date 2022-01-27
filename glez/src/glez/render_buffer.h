@@ -41,7 +41,7 @@ namespace glez {
 	public:
 		virtual ~render_buffer_listener() {}
 
-		virtual void on_render_buffer_change(const render_buffer& _buffer) = 0;
+		virtual void on_render_buffer_change(render_buffer* _buffer) = 0;
 
 	};
 

@@ -62,7 +62,8 @@ namespace glez {
 		void add_vertex(std::shared_ptr<vertex> vertex);
 		void add_face(std::shared_ptr<quad_face> face);
 
-		static std::shared_ptr<quad_mesh> make_cube();
+		static quad_mesh* make_plane();
+		static quad_mesh* make_cube();
 
 	};
 
