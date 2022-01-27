@@ -4,3 +4,6 @@
 [submodule "glez/thirdparty/glm"]
 	path = glez/thirdparty/glm
 	url = https://github.com/g-truc/glm
+[submodule "need4speed/thirdparty/stb"]
+	path = need4speed/thirdparty/stb
+	url = https://github.com/nothings/stb

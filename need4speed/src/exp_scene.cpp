@@ -12,10 +12,14 @@
 #include <glm/vec2.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 bool read_file(const char* filePath, std::string& fileText);
-void* load_obj(const char* objFilePath, glez::unwrapped_object* obj);
+void load_OBJ(const char* objFilePath, glez::unwrapped_object* obj);
 GLuint load_shader(const char* shaderPath, GLenum shaderType);
 GLuint make_shader_program(std::vector<GLuint> shaderIDs);
+glez::texture* load_texture(const char* imgFilePath);
 
 exp_scene::exp_scene()
 {
@@ -53,7 +57,8 @@ exp_scene::exp_scene()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	load_obj("res/cube.obj", m_obj);
+	load_OBJ("res/cube.obj", m_obj);
+	m_obj->set_texture(load_texture("res/tex_cube_00.png"));
 
 	GLuint vert_bland = load_shader("shaders/unwrap.vert", GL_VERTEX_SHADER);
 	GLuint frag_bland = load_shader("shaders/unwrap.frag", GL_FRAGMENT_SHADER);
@@ -130,13 +135,12 @@ bool read_file(const char* filePath, std::string& fileText)
 	}
 }
 
-void* load_obj(const char* objFilePath, glez::unwrapped_object* obj)
+void load_OBJ(const char* objFilePath, glez::unwrapped_object* obj)
 {
 	std::ifstream ifs(objFilePath, std::ios::in);
 	std::string line;
 	if (ifs.fail()) {
 		std::cerr << "FAIL\n";
-		return nullptr;
 	}
 
 	std::vector<glm::vec3> positions;
@@ -236,15 +240,6 @@ void* load_obj(const char* objFilePath, glez::unwrapped_object* obj)
 
 	obj->set_mesh(mesh);
 
-	glez::texture* texture = new glez::texture(512, 512);
-	glm::u8vec4 color(0, 0, 255, 255);
-	for (size_t row = 0; row < 512; row++) {
-		for (size_t col = 0; col < 512; col++) {
-			texture->set_pixel(row, col, color);
-		}
-	}
-	obj->set_texture(texture);
-
 	obj->unwrap(tex_coords);
 }
 
@@ -295,4 +290,15 @@ GLuint make_shader_program(std::vector<GLuint> shaderIDs)
 	}
 
 	return program_ID;
+}
+
+glez::texture* load_texture(const char* imgFilePath)
+{
+	int w, h, n;
+	unsigned char* img = stbi_load(imgFilePath, &w, &h, &n, 4);
+	if (img == NULL) {
+		std::cout << "ERROR::STB_IMAGE::LOADING_FAILED" << std::endl;
+	}
+	glez::texture* texture = new glez::texture(w, h, img);
+	return texture;
 }

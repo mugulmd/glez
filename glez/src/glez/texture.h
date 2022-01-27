@@ -15,6 +15,7 @@ namespace glez {
 
 	public:
 		texture(size_t w, size_t h);
+		texture(size_t w, size_t h, unsigned char* _data);
 		~texture();
 
 		inline size_t width() { return m_width; }

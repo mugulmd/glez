@@ -14,10 +14,11 @@ void main()
 {
 	vec4 tex_color = texture(my_texture, vs_texCoord);
 
-	float ambiant = 0.2f;
+	float ambiant = 0.2;
 
 	vec3 light_dir = normalize(light_pos - vs_position);
 	float diffuse = max(dot(vs_normal, light_dir), 0.0f);
 
-	fs_color = vec4((ambiant + diffuse) * tex_color.rgb, 1.0);
+	//fs_color = vec4((ambiant + diffuse) * tex_color.rgb, 1.0);
+	fs_color = tex_color;
 }

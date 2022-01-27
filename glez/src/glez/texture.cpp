@@ -11,6 +11,10 @@ namespace glez {
 		m_data = new unsigned char[length];
 	}
 
+	texture::texture(size_t w, size_t h, unsigned char* _data) : 
+		m_width(w), m_height(h), m_data(_data)
+	{}
+
 	texture::~texture()
 	{
 		delete m_data;
