@@ -1,10 +1,11 @@
 #include <memory>
+#include <vector>
+#include <array>
 #include <unordered_map>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <vector>
 
 #include "exp_scene.h"
 
@@ -12,14 +13,13 @@
 #include <glm/gtc/type_ptr.hpp>
 
 bool read_file(const char* filePath, std::string& fileText);
+void* load_obj(const char* objFilePath, glez::unwrapped_object* obj);
 GLuint load_shader(const char* shaderPath, GLenum shaderType);
 GLuint make_shader_program(std::vector<GLuint> shaderIDs);
 
 exp_scene::exp_scene()
 {
-	glez::quad_mesh* plane = glez::quad_mesh::make_plane();
-	glez::texture* texture = new glez::texture(); // TODO : read from file
-	m_obj = new glez::unwrapped_object(plane, texture);
+	m_obj = new glez::unwrapped_object();
 	m_obj->add_render_buffer_listener(this);
 	m_obj->add_texture_listener(this);
 
@@ -47,12 +47,7 @@ exp_scene::exp_scene()
 
 	glBindVertexArray(0);
 
-	std::unordered_map<std::shared_ptr<glez::half_edge>, glm::vec2> tex_coords;
-	tex_coords[plane->get_faces().front()->half_edges[0]] = glm::vec2(0, 1);
-	tex_coords[plane->get_faces().front()->half_edges[1]] = glm::vec2(1, 1);
-	tex_coords[plane->get_faces().front()->half_edges[2]] = glm::vec2(1, 0);
-	tex_coords[plane->get_faces().front()->half_edges[3]] = glm::vec2(0, 0);
-	m_obj->unwrap(tex_coords);
+	load_obj("res/cube.obj", m_obj);
 
 	GLuint vert_bland = load_shader("shaders/bland.vert", GL_VERTEX_SHADER);
 	GLuint frag_bland = load_shader("shaders/bland.frag", GL_FRAGMENT_SHADER);
@@ -102,6 +97,8 @@ void exp_scene::display()
 	glBindVertexArray(0);
 }
 
+/* Utils */
+
 bool read_file(const char* filePath, std::string& fileText)
 {
 	try {
@@ -117,6 +114,117 @@ bool read_file(const char* filePath, std::string& fileText)
 		std::cout << "ERROR::FILE_NOT_SUCCESSFULLY_READ : " << filePath << std::endl;
 		return false;
 	}
+}
+
+void* load_obj(const char* objFilePath, glez::unwrapped_object* obj)
+{
+	std::ifstream ifs(objFilePath, std::ios::in);
+	std::string line;
+	if (ifs.fail()) {
+		std::cerr << "FAIL\n";
+		return nullptr;
+	}
+
+	std::vector<glm::vec3> positions;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> uvs;
+	std::vector<std::array<unsigned int, 12>> faces;
+
+	enum class ParserState {
+		DEFAULT, POSITION, NORMAL, UV, FACE
+	};
+
+	while (getline(ifs, line)) {
+		std::stringstream splitline(line);
+		std::string word;
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		std::array<unsigned int, 12> face;
+		size_t counter = 0;
+		ParserState state = ParserState::DEFAULT;
+		while (getline(splitline, word, ' ')) {
+			// position
+			if (counter == 0 && word.compare("v") == 0) {
+				state = ParserState::POSITION;
+			}
+			else if (state == ParserState::POSITION && counter < 4) {
+				position[counter - 1] = std::stof(word);
+
+				if (counter == 3) positions.push_back(position);
+			}
+			// vertex uv coordinate
+			else if (counter == 0 && word.compare("vt") == 0) {
+				state = ParserState::UV;
+			}
+			else if (state == ParserState::UV && counter < 3) {
+				uv[counter - 1] = std::stof(word);
+
+				if (counter == 2) uvs.push_back(uv);
+			}
+			// vertex normal
+			else if (counter == 0 && word.compare("vn") == 0) {
+				state = ParserState::NORMAL;
+			}
+			else if (state == ParserState::NORMAL && counter < 4) {
+				normal[counter - 1] = std::stof(word);
+
+				if (counter == 3) normals.push_back(normal);
+			}
+			// face
+			else if (counter == 0 && word.compare("f") == 0) {
+				state = ParserState::FACE;
+			}
+			else if (state == ParserState::FACE && counter < 5) {
+				std::stringstream splitslash(word);
+				std::string strIndex;
+				// position
+				getline(splitslash, strIndex, '/');
+				face[(counter - 1) * 3] = std::stoi(strIndex) - 1;
+				// uv
+				getline(splitslash, strIndex, '/');
+				face[(counter - 1) * 3 + 1] = std::stoi(strIndex) - 1;
+				// normal
+				getline(splitslash, strIndex, '/');
+				face[(counter - 1) * 3 + 2] = std::stoi(strIndex) - 1;
+
+				if (counter == 4) faces.push_back(face);
+			}
+			counter++;
+		}
+	}
+	ifs.close();
+
+	glez::quad_mesh* mesh = new glez::quad_mesh();
+	
+	std::vector<std::shared_ptr<glez::vertex>> vertices(positions.size());
+	for (size_t i = 0; i < positions.size(); i++) {
+		vertices[i] = std::make_shared<glez::vertex>(positions[i]);
+		mesh->add_vertex(vertices[i]);
+	}
+
+	std::unordered_map<std::shared_ptr<glez::half_edge>, glm::vec2> tex_coords;
+	for (size_t i = 0; i < faces.size(); i++) {
+		std::array<unsigned int, 12>& raw_face = faces[i];
+		std::array<std::shared_ptr<glez::vertex>, 4> corners{
+			vertices[raw_face[0]], vertices[raw_face[3]], vertices[raw_face[6]], vertices[raw_face[9]]
+		};
+		glm::vec3 normal = glm::normalize(
+			normals[raw_face[2]] + normals[raw_face[5]] + normals[raw_face[8]] + normals[raw_face[11]]
+		);
+		std::shared_ptr<glez::quad_face> f = glez::quad_face::make_face(corners, normal);
+		mesh->add_face(f);
+		tex_coords[f->half_edges[0]] = uvs[raw_face[1]];
+		tex_coords[f->half_edges[1]] = uvs[raw_face[4]];
+		tex_coords[f->half_edges[2]] = uvs[raw_face[7]];
+		tex_coords[f->half_edges[3]] = uvs[raw_face[10]];
+	}
+
+	obj->set_mesh(mesh);
+
+	obj->set_texture(new glez::texture()); // TODO : load from file
+
+	obj->unwrap(tex_coords);
 }
 
 GLuint load_shader(const char* shaderPath, GLenum shaderType)

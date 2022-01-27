@@ -11,10 +11,6 @@ namespace glez {
 		delete m_buffer;
 	}
 
-	abs_object::abs_object(quad_mesh* _mesh, texture* _texture, unsigned int _uv_dim) : 
-		m_mesh(_mesh), m_texture(_texture), m_buffer(new render_buffer(_uv_dim))
-	{}
-
 	void abs_object::notify_render_buffer_listeners()
 	{
 		for (render_buffer_listener* listener : m_buffer_listeners) {

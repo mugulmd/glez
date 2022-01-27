@@ -4,8 +4,8 @@
 
 namespace glez {
 
-	unwrapped_object::unwrapped_object(quad_mesh* _mesh, texture* _texture) : 
-		abs_object(_mesh, _texture, 2)
+	unwrapped_object::unwrapped_object() : 
+		abs_object(2)
 	{}
 
 	void unwrapped_object::unwrap(std::unordered_map<std::shared_ptr<half_edge>, glm::vec2> tex_coords)
