@@ -23,6 +23,10 @@ namespace glez {
 
 	public:
 		void set_pixel(size_t row, size_t col, glm::u8vec4 color);
+		void set_pixel(float x, float y, glm::u8vec4 color);
+
+		glm::u8vec4 get_pixel(size_t row, size_t col);
+		glm::u8vec4 get_pixel(float x, float y);
 
 	};
 

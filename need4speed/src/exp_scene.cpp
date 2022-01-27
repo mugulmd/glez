@@ -55,8 +55,8 @@ exp_scene::exp_scene()
 
 	load_obj("res/cube.obj", m_obj);
 
-	GLuint vert_bland = load_shader("shaders/bland.vert", GL_VERTEX_SHADER);
-	GLuint frag_bland = load_shader("shaders/bland.frag", GL_FRAGMENT_SHADER);
+	GLuint vert_bland = load_shader("shaders/unwrap.vert", GL_VERTEX_SHADER);
+	GLuint frag_bland = load_shader("shaders/unwrap.frag", GL_FRAGMENT_SHADER);
 	m_shader = make_shader_program({vert_bland, frag_bland});
 }
 

@@ -1,7 +1,10 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+
 #include "glez.h"
 #include "exp_scene.h"
+
+#include <glm/vec2.hpp>
 
 /* Core program */
 
@@ -18,6 +21,8 @@ static float screenWidth = 1200.f;
 static float screenHeight = 900.f;
 static GLFWwindow* window;
 static exp_scene* scene;
+static bool is_dragging = false;
+static glm::vec2 ref_pos;
 
 int main(int argc, char** argv) 
 {
@@ -94,17 +99,37 @@ bool initGL()
 
 void scroll_callback(GLFWwindow* _window, double xoffset, double yoffset)
 {
-    // TODO
+    float lambda = 1.f - (float)yoffset * 0.1f;
+    scene->get_camera()->scale_view(lambda);
 }
 
 void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods)
 {
-    // TODO
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            is_dragging = true;
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            ref_pos.x = 2 * ((float)xpos / screenWidth) - 1;
+            ref_pos.y = 1 - 2 * ((float)ypos / screenHeight);
+        }
+        else {
+            is_dragging = false;
+        }
+    }
 }
 
 void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos)
 {
-    // TODO
+    if (is_dragging) {
+        glm::vec2 cur_pos = glm::vec2(2 * ((float)xpos / screenWidth) - 1,
+            1 - 2 * ((float)ypos / screenHeight));
+        glm::vec2 delta = cur_pos - ref_pos;
+        GLfloat theta_x = delta.x * 3.14f * 0.5f;
+        GLfloat theta_y = delta.y * 3.14f * 0.5f;
+        scene->get_camera()->rotate_view(-theta_x, -theta_y);
+        ref_pos = cur_pos;
+    }
 }
 
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods)
