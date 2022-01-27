@@ -2,12 +2,27 @@
 
 #include "core.h"
 
+#include <glm/vec4.hpp>
+
 namespace glez {
 
 	class GLEZ_API texture
 	{
+	private:
+		size_t m_width;
+		size_t m_height;
+		unsigned char* m_data;
+
 	public:
-		// TODO
+		texture(size_t w, size_t h);
+		~texture();
+
+		inline size_t width() { return m_width; }
+		inline size_t height() { return m_height; }
+		inline unsigned char* data() { return m_data; }
+
+	public:
+		void set_pixel(size_t row, size_t col, glm::u8vec4 color);
 
 	};
 

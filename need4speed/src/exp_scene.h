@@ -15,6 +15,7 @@ private:
 	GLuint m_ebo;
 	GLuint m_vao;
 	GLuint m_shader;
+	GLuint m_texID;
 
 public:
 	exp_scene();

@@ -11,6 +11,17 @@ namespace glez {
 		delete m_buffer;
 	}
 
+	void abs_object::set_mesh(quad_mesh* _mesh)
+	{
+		m_mesh = _mesh;
+	}
+
+	void abs_object::set_texture(texture* _texture)
+	{
+		m_texture = _texture;
+		notify_texture_listeners();
+	}
+
 	void abs_object::notify_render_buffer_listeners()
 	{
 		for (render_buffer_listener* listener : m_buffer_listeners) {

@@ -29,6 +29,7 @@ exp_scene::exp_scene()
 	glGenBuffers(1, &m_vbo);
 	glGenBuffers(1, &m_ebo);
 	glGenVertexArrays(1, &m_vao);
+	glGenTextures(1, &m_texID);
 
 	glBindVertexArray(m_vao);
 
@@ -46,6 +47,11 @@ exp_scene::exp_scene()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
 
 	glBindVertexArray(0);
+
+	glBindTexture(GL_TEXTURE_2D, m_texID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	load_obj("res/cube.obj", m_obj);
 
@@ -78,7 +84,13 @@ void exp_scene::on_render_buffer_change(glez::render_buffer* buffer)
 
 void exp_scene::on_texture_change(glez::texture* texture)
 {
-	// TODO
+	glBindTexture(GL_TEXTURE_2D, m_texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+		texture->width(), texture->height(),
+		0,
+		GL_RGBA, GL_UNSIGNED_BYTE,
+		texture->data());
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void exp_scene::display()
@@ -90,11 +102,13 @@ void exp_scene::display()
 	GLint projLoc = glGetUniformLocation(m_shader, "projection");
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_proj()));
 
+	glBindTexture(GL_TEXTURE_2D, m_texID);
 	glBindVertexArray(m_vao);
 	glDrawElements(GL_TRIANGLES, 
 		m_obj->get_render_buffer()->face_indices().size(), 
 		GL_UNSIGNED_INT, NULL);
 	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /* Utils */
@@ -222,7 +236,14 @@ void* load_obj(const char* objFilePath, glez::unwrapped_object* obj)
 
 	obj->set_mesh(mesh);
 
-	obj->set_texture(new glez::texture()); // TODO : load from file
+	glez::texture* texture = new glez::texture(512, 512);
+	glm::u8vec4 color(0, 0, 255, 255);
+	for (size_t row = 0; row < 512; row++) {
+		for (size_t col = 0; col < 512; col++) {
+			texture->set_pixel(row, col, color);
+		}
+	}
+	obj->set_texture(texture);
 
 	obj->unwrap(tex_coords);
 }

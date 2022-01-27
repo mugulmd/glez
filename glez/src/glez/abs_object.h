@@ -24,8 +24,8 @@ namespace glez {
 			m_buffer(new render_buffer(_uv_dim))
 		{}
 
-		inline void set_mesh(quad_mesh* _mesh) { m_mesh = _mesh; }
-		inline void set_texture(texture* _texture) { m_texture = _texture; }
+		void set_mesh(quad_mesh* _mesh);
+		void set_texture(texture* _texture);
 
 		inline texture* get_texture() { return m_texture; }
 		inline render_buffer* get_render_buffer() { return m_buffer; }
