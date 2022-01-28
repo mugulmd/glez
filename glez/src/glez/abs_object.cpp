@@ -4,22 +4,15 @@
 
 namespace glez {
 
+	abs_object::abs_object(texture* _texture, unsigned int _uv_dim) :
+		m_texture(_texture), m_mesh(new quad_mesh()), m_buffer(new render_buffer(_uv_dim))
+	{}
+
 	abs_object::~abs_object() 
 	{
 		delete m_mesh;
 		delete m_texture;
 		delete m_buffer;
-	}
-
-	void abs_object::set_mesh(quad_mesh* _mesh)
-	{
-		m_mesh = _mesh;
-	}
-
-	void abs_object::set_texture(texture* _texture)
-	{
-		m_texture = _texture;
-		notify_texture_listeners();
 	}
 
 	void abs_object::notify_render_buffer_listeners()

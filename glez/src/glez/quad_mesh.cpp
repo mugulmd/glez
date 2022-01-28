@@ -131,78 +131,11 @@ namespace glez {
 		m_faces.push_back(face);
 	}
 
-	quad_mesh* quad_mesh::make_plane()
+	void quad_mesh::remove_face(std::shared_ptr<quad_face> face)
 	{
-		quad_mesh* mesh = new quad_mesh();
+		// TODO : un-connect half-edges using opposite pointers
 
-		std::array<glm::vec3, 4> positions{
-			glm::vec3(-1, 1, 0),
-			glm::vec3(1, 1, 0),
-			glm::vec3(1, -1, 0),
-			glm::vec3(-1, -1, 0)
-		};
-
-		std::array<std::shared_ptr<vertex>, 4> vertices;
-		for (size_t i = 0; i < 4; i++) {
-			vertices[i] = std::make_shared<vertex>(positions[i]);
-			mesh->add_vertex(vertices[i]);
-		}
-
-		std::shared_ptr<quad_face> f = quad_face::make_face(vertices, glm::vec3(0, 0, 1));
-		mesh->add_face(f);
-
-		return mesh;
-	}
-
-	quad_mesh* quad_mesh::make_cube()
-	{
-		quad_mesh* mesh = new quad_mesh();
-
-		std::array<glm::vec3, 8> positions{
-			glm::vec3(-1, 1, -1), 
-			glm::vec3(-1, 1, 1),
-			glm::vec3(-1, -1, 1),
-			glm::vec3(-1, -1, -1),
-			glm::vec3(1, 1, -1),
-			glm::vec3(1, 1, 1),
-			glm::vec3(1, -1, -1),
-			glm::vec3(1, -1, 1)
-		};
-
-		std::array<std::shared_ptr<vertex>, 8> vertices;
-		for (size_t i = 0; i < 8; i++) {
-			vertices[i] = std::make_shared<vertex>(positions[i]);
-			mesh->add_vertex(vertices[i]);
-		}
-
-		std::array<std::array<size_t, 4>, 6> corners_indices{
-			std::array<size_t, 4>{0, 1, 2, 3},
-			std::array<size_t, 4>{0, 4, 4, 1},
-			std::array<size_t, 4>{5, 4, 6, 7},
-			std::array<size_t, 4>{1, 5, 7, 2},
-			std::array<size_t, 4>{2, 7, 6, 3},
-			std::array<size_t, 4>{3, 6, 4, 0}
-		};
-
-		std::array<glm::vec3, 6> normals{
-			glm::vec3(-1, 0, 0),
-			glm::vec3(0, 1, 0),
-			glm::vec3(1, 0, 0),
-			glm::vec3(0, 0, 1),
-			glm::vec3(0, -1, 0),
-			glm::vec3(0, 0, -1)
-		};
-
-		for (size_t i = 0; i < 6; i++) {
-			std::array<std::shared_ptr<vertex>, 4> corners;
-			for (size_t j = 0; j < 4; j++) {
-				corners[j] = vertices[corners_indices[i][j]];
-			}
-			std::shared_ptr<quad_face> f = quad_face::make_face(corners, normals[i]);
-			mesh->add_face(f);
-		}
-
-		return mesh;
+		m_faces.remove(face);
 	}
 
 }

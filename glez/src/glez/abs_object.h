@@ -14,19 +14,15 @@ namespace glez {
 	class GLEZ_API abs_object
 	{
 	protected:
-		quad_mesh* m_mesh = nullptr;
-		texture* m_texture = nullptr;
+		quad_mesh* m_mesh;
+		texture* m_texture;
 		render_buffer* m_buffer;
 
 	public:
 		virtual ~abs_object() = 0;
-		explicit abs_object(unsigned int _uv_dim) : 
-			m_buffer(new render_buffer(_uv_dim))
-		{}
+		abs_object(texture* _texture ,unsigned int _uv_dim);
 
-		void set_mesh(quad_mesh* _mesh);
-		void set_texture(texture* _texture);
-
+		inline quad_mesh* get_mesh() { return m_mesh; }
 		inline texture* get_texture() { return m_texture; }
 		inline render_buffer* get_render_buffer() { return m_buffer; }
 
@@ -40,6 +36,9 @@ namespace glez {
 	public:
 		void add_render_buffer_listener(render_buffer_listener *listener);
 		void add_texture_listener(texture_listener *listener);
+
+	public:
+		virtual void create_uv_layout() = 0;
 
 	};
 

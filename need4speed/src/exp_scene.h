@@ -4,25 +4,25 @@
 
 #include "glez.h"
 
-class exp_scene : public glez::scene, 
-	public glez::render_buffer_listener, 
-	public glez::texture_listener
+class exp_scene : public glez::scene
 {
 private:
 	glez::unwrapped_object* m_obj;
 
-	GLuint m_vbo;
-	GLuint m_ebo;
-	GLuint m_vao;
-	GLuint m_shader;
-	GLuint m_texID;
+	GLuint m_vboIDs[2];
+	GLuint m_eboIDs[2];
+	GLuint m_vaoIDs[2];
+	GLuint m_texIDs[2];
+	GLuint m_shaderIDs[2];
+
+	void init_graphics(size_t idx, unsigned int uv_dim);
+	void send_to_gpu(size_t idx, glez::render_buffer* buffer);
+	void send_to_gpu(size_t idx, glez::texture* texture);
+	void render(size_t idx);
 
 public:
 	exp_scene();
 	~exp_scene();
-
-	void on_render_buffer_change(glez::render_buffer* buffer) override;
-	void on_texture_change(glez::texture* texture) override;
 
 	void display();
 

@@ -1,7 +1,6 @@
 #include <memory>
 #include <vector>
 #include <array>
-#include <unordered_map>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -23,21 +22,35 @@ glez::texture* load_texture(const char* imgFilePath);
 
 exp_scene::exp_scene()
 {
-	m_obj = new glez::unwrapped_object();
-	m_obj->add_render_buffer_listener(this);
-	m_obj->add_texture_listener(this);
+	m_obj = new glez::unwrapped_object(load_texture("res/tex_tbone_00.png"));
+	load_OBJ("res/tbone.obj", m_obj);
 
-	unsigned int uv_dim = m_obj->get_render_buffer()->uv_dim();
+	glGenBuffers(2, m_vboIDs);
+	glGenBuffers(2, m_eboIDs);
+	glGenVertexArrays(2, m_vaoIDs);
+	glGenTextures(2, m_texIDs);
+	init_graphics(0, m_obj->get_render_buffer()->uv_dim());
+
+	GLuint vert_bland = load_shader("shaders/unwrap.vert", GL_VERTEX_SHADER);
+	GLuint frag_bland = load_shader("shaders/unwrap.frag", GL_FRAGMENT_SHADER);
+	m_shaderIDs[0] = make_shader_program({vert_bland, frag_bland});
+
+	m_obj->create_uv_layout();
+	send_to_gpu(0, m_obj->get_render_buffer());
+	send_to_gpu(0, m_obj->get_texture());
+}
+
+exp_scene::~exp_scene()
+{
+	delete m_obj;
+}
+
+void exp_scene::init_graphics(size_t idx, unsigned int uv_dim)
+{
 	unsigned int stride = 6 + uv_dim;
 
-	glGenBuffers(1, &m_vbo);
-	glGenBuffers(1, &m_ebo);
-	glGenVertexArrays(1, &m_vao);
-	glGenTextures(1, &m_texID);
-
-	glBindVertexArray(m_vao);
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+	glBindVertexArray(m_vaoIDs[idx]);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vboIDs[idx]);
 	// position
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
@@ -47,49 +60,35 @@ exp_scene::exp_scene()
 	// texture coordinates
 	glVertexAttribPointer(2, uv_dim, GL_FLOAT, GL_FALSE, stride * sizeof(float), (GLvoid*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
-
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboIDs[idx]);
 	glBindVertexArray(0);
 
-	glBindTexture(GL_TEXTURE_2D, m_texID);
+	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	load_OBJ("res/tbone.obj", m_obj);
-	m_obj->set_texture(load_texture("res/tex_tbone_00.png"));
-
-	GLuint vert_bland = load_shader("shaders/unwrap.vert", GL_VERTEX_SHADER);
-	GLuint frag_bland = load_shader("shaders/unwrap.frag", GL_FRAGMENT_SHADER);
-	m_shader = make_shader_program({vert_bland, frag_bland});
 }
 
-exp_scene::~exp_scene()
+void exp_scene::send_to_gpu(size_t idx, glez::render_buffer* buffer)
 {
-	delete m_obj;
-}
-
-void exp_scene::on_render_buffer_change(glez::render_buffer* buffer)
-{
-	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-	glBufferData(GL_ARRAY_BUFFER, 
-		m_obj->get_render_buffer()->vertex_attributes().size() * sizeof(float), 
-		m_obj->get_render_buffer()->vertex_attributes().data(), 
+	glBindBuffer(GL_ARRAY_BUFFER, m_vboIDs[idx]);
+	glBufferData(GL_ARRAY_BUFFER,
+		buffer->vertex_attributes().size() * sizeof(float),
+		buffer->vertex_attributes().data(),
 		GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_eboIDs[idx]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		m_obj->get_render_buffer()->face_indices().size() * sizeof(unsigned int),
-		m_obj->get_render_buffer()->face_indices().data(),
+		buffer->face_indices().size() * sizeof(unsigned int),
+		buffer->face_indices().data(),
 		GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void exp_scene::on_texture_change(glez::texture* texture)
+void exp_scene::send_to_gpu(size_t idx, glez::texture* texture)
 {
-	glBindTexture(GL_TEXTURE_2D, m_texID);
+	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		texture->width(), texture->height(),
 		0,
@@ -98,22 +97,28 @@ void exp_scene::on_texture_change(glez::texture* texture)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void exp_scene::display()
+void exp_scene::render(size_t idx)
 {
-	glUseProgram(m_shader);
+	glUseProgram(m_shaderIDs[idx]);
 
-	GLint viewLoc = glGetUniformLocation(m_shader, "view");
+	GLint viewLoc = glGetUniformLocation(m_shaderIDs[idx], "view");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_view()));
-	GLint projLoc = glGetUniformLocation(m_shader, "projection");
+	GLint projLoc = glGetUniformLocation(m_shaderIDs[idx], "projection");
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_proj()));
 
-	glBindTexture(GL_TEXTURE_2D, m_texID);
-	glBindVertexArray(m_vao);
-	glDrawElements(GL_TRIANGLES, 
-		m_obj->get_render_buffer()->face_indices().size(), 
+	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
+	glBindVertexArray(m_vaoIDs[idx]);
+	// TODO : draw object depending on idx
+	glDrawElements(GL_TRIANGLES,
+		m_obj->get_render_buffer()->face_indices().size(),
 		GL_UNSIGNED_INT, NULL);
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void exp_scene::display()
+{
+	render(0);
 }
 
 /* Utils */
@@ -212,36 +217,28 @@ void load_OBJ(const char* objFilePath, glez::unwrapped_object* obj)
 		}
 	}
 	ifs.close();
-
-	glez::quad_mesh* mesh = new glez::quad_mesh();
 	
 	std::vector<std::shared_ptr<glez::vertex>> vertices(positions.size());
 	for (size_t i = 0; i < positions.size(); i++) {
 		vertices[i] = std::make_shared<glez::vertex>(positions[i]);
-		mesh->add_vertex(vertices[i]);
+		obj->get_mesh()->add_vertex(vertices[i]);
 	}
 
-	std::unordered_map<std::shared_ptr<glez::half_edge>, glm::vec2> tex_coords;
 	for (size_t i = 0; i < faces.size(); i++) {
 		std::array<unsigned int, 12>& raw_face = faces[i];
 		std::array<std::shared_ptr<glez::vertex>, 4> corners{
 			vertices[raw_face[0]], vertices[raw_face[3]], vertices[raw_face[6]], vertices[raw_face[9]]
 		};
+		std::array<glm::vec2, 4> tex_coords{
+			uvs[raw_face[1]], uvs[raw_face[4]], uvs[raw_face[7]], uvs[raw_face[10]]
+		};
 		glm::vec3 normal = glm::normalize(
 			normals[raw_face[2]] + normals[raw_face[5]] + normals[raw_face[8]] + normals[raw_face[11]]
 		);
 		std::shared_ptr<glez::quad_face> f = glez::quad_face::make_face(corners, normal);
-		mesh->add_face(f);
-		tex_coords[f->half_edges[0]] = uvs[raw_face[1]];
-		tex_coords[f->half_edges[1]] = uvs[raw_face[4]];
-		tex_coords[f->half_edges[2]] = uvs[raw_face[7]];
-		tex_coords[f->half_edges[3]] = uvs[raw_face[10]];
+		obj->add_face(f, tex_coords);
 	}
 	std::cout << "n faces: " << faces.size() << std::endl;
-
-	obj->set_mesh(mesh);
-
-	obj->unwrap(tex_coords);
 }
 
 GLuint load_shader(const char* shaderPath, GLenum shaderType)

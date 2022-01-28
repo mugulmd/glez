@@ -4,14 +4,14 @@
 
 namespace glez {
 
-	texture::texture(size_t w, size_t h) : 
+	texture::texture(unsigned int w, unsigned int h) :
 		m_width(w), m_height(h)
 	{
 		size_t length = w * h * 4;
 		m_data = new unsigned char[length];
 	}
 
-	texture::texture(size_t w, size_t h, unsigned char* _data) : 
+	texture::texture(unsigned int w, unsigned int h, unsigned char* _data) :
 		m_width(w), m_height(h), m_data(_data)
 	{}
 
@@ -20,7 +20,7 @@ namespace glez {
 		delete m_data;
 	}
 
-	void texture::set_pixel(size_t row, size_t col, glm::u8vec4 color)
+	void texture::set_pixel(unsigned int row, unsigned int col, const glm::u8vec4& color)
 	{
 		size_t idx = 4 * (row * m_width + col);
 		m_data[idx] = color.r;
@@ -29,23 +29,23 @@ namespace glez {
 		m_data[idx + 3] = color.a;
 	}
 
-	void texture::set_pixel(float x, float y, glm::u8vec4 color)
+	void texture::set_pixel(float x, float y, const glm::u8vec4& color)
 	{
-		size_t row = (size_t)(y * (float)(m_height - 1));
-		size_t col = (size_t)(x * (float)(m_width - 1));
+		unsigned int row = (unsigned int)(y * (float)(m_height - 1));
+		unsigned int col = (unsigned int)(x * (float)(m_width - 1));
 		set_pixel(row, col, color);
 	}
 
-	glm::u8vec4 texture::get_pixel(size_t row, size_t col)
+	glm::u8vec4 texture::get_pixel(unsigned int row, unsigned int col)
 	{
-		size_t idx = 4 * (row * m_width + col);
+		unsigned int idx = 4 * (row * m_width + col);
 		return glm::u8vec4(m_data[idx], m_data[idx + 1], m_data[idx + 2], m_data[idx + 3]);
 	}
 
 	glm::u8vec4 texture::get_pixel(float x, float y)
 	{
-		size_t row = (size_t)(y * (float)(m_height - 1));
-		size_t col = (size_t)(x * (float)(m_width - 1));
+		unsigned int row = (unsigned int)(y * (float)(m_height - 1));
+		unsigned int col = (unsigned int)(x * (float)(m_width - 1));
 		return get_pixel(row, col);
 	}
 
