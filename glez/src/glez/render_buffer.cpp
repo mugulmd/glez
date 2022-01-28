@@ -30,7 +30,7 @@ namespace glez {
 			m_vertex_attrib[idx] = n.y; idx++;
 			m_vertex_attrib[idx] = n.z; idx++;
 			for (size_t j = 0; j < uv_dim(); j++) {
-				m_vertex_attrib[idx] = tex_coords[j]; idx++;
+				m_vertex_attrib[idx] = tex_coords[i * uv_dim() + j]; idx++;
 			}
 		}
 

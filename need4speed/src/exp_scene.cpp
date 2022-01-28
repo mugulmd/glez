@@ -57,8 +57,8 @@ exp_scene::exp_scene()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	load_OBJ("res/cube.obj", m_obj);
-	m_obj->set_texture(load_texture("res/tex_cube_00.png"));
+	load_OBJ("res/tbone.obj", m_obj);
+	m_obj->set_texture(load_texture("res/tex_tbone_00.png"));
 
 	GLuint vert_bland = load_shader("shaders/unwrap.vert", GL_VERTEX_SHADER);
 	GLuint frag_bland = load_shader("shaders/unwrap.frag", GL_FRAGMENT_SHADER);
@@ -237,6 +237,7 @@ void load_OBJ(const char* objFilePath, glez::unwrapped_object* obj)
 		tex_coords[f->half_edges[2]] = uvs[raw_face[7]];
 		tex_coords[f->half_edges[3]] = uvs[raw_face[10]];
 	}
+	std::cout << "n faces: " << faces.size() << std::endl;
 
 	obj->set_mesh(mesh);
 
@@ -299,6 +300,7 @@ glez::texture* load_texture(const char* imgFilePath)
 	if (img == NULL) {
 		std::cout << "ERROR::STB_IMAGE::LOADING_FAILED" << std::endl;
 	}
+	std::cout << "w: " << w << ", h: " << h << ", n: " << n << std::endl;
 	glez::texture* texture = new glez::texture(w, h, img);
 	return texture;
 }
