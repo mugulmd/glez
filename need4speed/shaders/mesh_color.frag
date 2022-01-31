@@ -8,20 +8,20 @@ out vec4 fs_color;
 
 uniform sampler2D my_texture;
 
-vec3 light_pos = vec3(-3, 3, 10);
-
 void main()
 {
 	vec2 tex_coord = vec2(vs_texCoord.x + vs_texCoord.z, 1.0 - (vs_texCoord.y + vs_texCoord.w));
-	float level = textureQueryLod(my_texture, tex_coord);
+
+	float level = textureQueryLod(my_texture, tex_coord).x;
 	float scale = 1.0 / pow(2, level);
-	vec2 tex_coord_scaled = vec2(scale * vs_texCoord.x + vs_texCoord.z, 1.0 - (scale * vs_texCoord.y + vs_texCoord.w));
-	vec4 tex_color = texture(my_texture, tex_coord_scaled);
 
-	float ambiant = 1.0;
+	ivec2 dim_base = textureSize(my_texture, 0);
+	ivec2 dim_level = textureSize(my_texture, int(level));
+	float dim_ratio = float(dim_base.x) / float(dim_level.x);
 
-	vec3 light_dir = normalize(light_pos - vs_position);
-	float diffuse = max(dot(vs_normal, light_dir), 0.0f);
+	vec2 tex_coord_scaled = vec2((scale*vs_texCoord.x+vs_texCoord.z)*dim_ratio, 1.0-(scale*vs_texCoord.y+vs_texCoord.w)*dim_ratio);
 
-	fs_color = vec4(0.5 * (ambiant + diffuse) * tex_color.rgb, 1.0);
+	vec4 tex_color = textureLod(my_texture, tex_coord_scaled, level);
+
+	fs_color = tex_color;
 }

@@ -65,13 +65,14 @@ exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path)
 	transfer_res();
 	m_obj_mc->pack_frames();
 	transfer_colors();
+	m_obj_mc->build_mipmap(10);
 	m_objs[2] = m_obj_mc;
 
 	/* Mesh Color texture visualizer */
 	m_plane_mc = new glez::unwrapped_object(new glez::texture(
-		m_obj_mc->get_texture()->width(), 
-		m_obj_mc->get_texture()->height(), 
-		m_obj_mc->get_texture()->data()
+		m_obj_mc->get_mipmap()->levels[1]->width(),
+		m_obj_mc->get_mipmap()->levels[1]->height(),
+		m_obj_mc->get_mipmap()->levels[1]->data()
 	));
 	make_plane(m_plane_mc);
 	m_objs[3] = m_plane_mc;
@@ -85,10 +86,7 @@ exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path)
 		send_to_gpu(i, m_objs[i]->get_texture());
 	}
 
-	/* Mipmaps */
 	generate_mipmap(0);
-
-	m_obj_mc->build_mipmap(10);
 	send_to_gpu(2, m_obj_mc->get_mipmap());
 }
 
@@ -175,7 +173,8 @@ void exp_scene::init_graphics(size_t idx, unsigned int uv_dim, bool use_mipmap)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	if (use_mipmap) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 10);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 5);
 	}
 	else {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -214,7 +213,7 @@ void exp_scene::send_to_gpu(size_t idx, glez::texture* texture)
 void exp_scene::send_to_gpu(size_t idx, glez::mipmap* mipmap)
 {
 	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
-	for (size_t i = 1; i < mipmap->levels.size(); i++) {
+	for (size_t i = 0; i < mipmap->levels.size(); i++) {
 		glez::texture* tex = mipmap->levels[i];
 		glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, 
 			tex->width(), tex->height(), 
