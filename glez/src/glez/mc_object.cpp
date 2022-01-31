@@ -77,7 +77,7 @@ namespace glez {
 				break;
 			}
 		}
-		GLEZ_INFO("mc texture dim: {}", m_tex_dim);
+		GLEZ_INFO("mesh color texture packing done: texture dim={}", m_tex_dim);
 
 		delete m_texture;
 		m_texture = new texture(m_tex_dim, m_tex_dim);

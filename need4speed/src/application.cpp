@@ -1,6 +1,8 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+#include <iostream>
+
 #include "glez.h"
 #include "exp_scene.h"
 
@@ -136,7 +138,18 @@ void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos)
 
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_TAB && action == GLFW_RELEASE) {
+    if (key == GLFW_KEY_H && action == GLFW_RELEASE) {
+        std::cout << "TAB: change displayed object" << std::endl;
+        std::cout << "I: log info on displayed object" << std::endl;
+        std::cout << "T: toggle log rendering time of displayed object" << std::endl;
+    }
+    else if (key == GLFW_KEY_TAB && action == GLFW_RELEASE) {
         scene->change_displayed_obj();
+    }
+    else if (key == GLFW_KEY_I && action == GLFW_RELEASE) {
+        scene->log_info_obj();
+    }
+    else if (key == GLFW_KEY_T && action == GLFW_RELEASE) {
+        scene->toggle_log_rendering_time();
     }
 }

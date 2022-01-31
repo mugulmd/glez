@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <array>
 
 #include "GL/glew.h"
 
@@ -45,9 +46,18 @@ public:
 
 private:
 	unsigned int m_idx_display = 0;
+	std::array<float, 1000> m_frame_times;
+	int m_n_frames = 0;
+	bool m_log_rendering_time = false;
 
 public:
-	inline void change_displayed_obj() { m_idx_display = (m_idx_display + 1) % 4; }
+	inline void change_displayed_obj() 
+	{ 
+		m_idx_display = (m_idx_display + 1) % 4; 
+		m_n_frames = 0; 
+	}
+	inline void log_info_obj() { m_objs[m_idx_display]->log_info(); }
+	inline void toggle_log_rendering_time() { m_log_rendering_time = !m_log_rendering_time;  }
 
 };
 

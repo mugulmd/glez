@@ -8,6 +8,8 @@
 #include <sstream>
 
 #include <cmath>
+#include <chrono>
+#include <numeric>
 
 #include "exp_scene.h"
 
@@ -199,20 +201,37 @@ void exp_scene::send_to_gpu(size_t idx, glez::texture* texture)
 void exp_scene::render(size_t idx, glez::abs_object* obj)
 {
 	glUseProgram(m_shaderIDs[idx]);
-
 	GLint viewLoc = glGetUniformLocation(m_shaderIDs[idx], "view");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_view()));
 	GLint projLoc = glGetUniformLocation(m_shaderIDs[idx], "projection");
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_proj()));
 
+	glFinish();
+	auto start = std::chrono::high_resolution_clock::now();
+
 	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
 	glBindVertexArray(m_vaoIDs[idx]);
-	// TODO : draw object depending on idx
 	glDrawElements(GL_TRIANGLES,
 		obj->get_render_buffer()->face_indices().size(),
 		GL_UNSIGNED_INT, NULL);
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFinish();
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> duration = end - start;
+
+	if (m_n_frames < m_frame_times.size()) {
+		m_frame_times[m_n_frames] = duration.count();
+		m_n_frames++;
+	}
+	else {
+		float avg = std::accumulate(m_frame_times.begin(), m_frame_times.end(), 0.f) / m_frame_times.size();
+		m_n_frames = 0;
+		if (m_log_rendering_time) {
+			std::cout << "rendering time: " << avg * 1000.f << "ms" << std::endl;
+		}
+	}
 }
 
 void exp_scene::display()
@@ -337,7 +356,6 @@ void load_OBJ(const char* objFilePath, glez::unwrapped_object* obj)
 		std::shared_ptr<glez::quad_face> f = glez::quad_face::make_face(corners, normal);
 		obj->add_face(f, tex_coords);
 	}
-	std::cout << "n faces: " << faces.size() << std::endl;
 }
 
 GLuint load_shader(const char* shaderPath, GLenum shaderType)
@@ -396,7 +414,6 @@ glez::texture* load_texture(const char* imgFilePath)
 	if (img == NULL) {
 		std::cout << "ERROR::STB_IMAGE::LOADING_FAILED" << std::endl;
 	}
-	std::cout << "w: " << w << ", h: " << h << ", n: " << n << std::endl;
 	glez::texture* texture = new glez::texture(w, h, img);
 	return texture;
 }

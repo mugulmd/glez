@@ -26,6 +26,8 @@ namespace glez {
 		inline texture* get_texture() { return m_texture; }
 		inline render_buffer* get_render_buffer() { return m_buffer; }
 
+		void log_info();
+
 	protected:
 		std::list<render_buffer_listener*> m_buffer_listeners;
 		std::list<texture_listener*> m_tex_listeners;
