@@ -64,9 +64,11 @@ namespace glez {
 		}
 	}
 
-	void mipmap::add_level(unsigned int w, unsigned int h)
+	texture* mipmap::add_level(unsigned int w, unsigned int h)
 	{
-		levels.push_back(new texture(w, h));
+		texture* level = new texture(w, h);
+		levels.push_back(level);
+		return level;
 	}
 
 }

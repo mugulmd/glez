@@ -23,9 +23,10 @@ namespace glez {
 
 		inline size_t size() { return res.x * res.y; }
 
-		void set_pixel(texture* tex, unsigned int x, unsigned int y, const glm::u8vec4& color);
+		void set_pixel(texture* tex, unsigned int x, unsigned int y, const glm::u8vec4& color, unsigned int level = 0);
 
-		glm::u8vec4 get_pixel(texture* tex, unsigned int x, unsigned int y);
+		glm::u8vec4 get_pixel(texture* tex, unsigned int x, unsigned int y, unsigned int level = 0);
+		glm::u8vec4 get_weighted_avg(texture* tex, unsigned int x, unsigned int y, unsigned int level = 0);
 	};
 
 	class GLEZ_API mc_object : public abs_object
@@ -33,6 +34,8 @@ namespace glez {
 	public:
 		mc_object(unsigned int init_res = 512);
 		~mc_object();
+
+		void create_uv_layout() override;
 
 	private:
 		std::unordered_map<std::shared_ptr<quad_face>, frame> m_frames;
@@ -42,9 +45,13 @@ namespace glez {
 		inline frame& get_frame(std::shared_ptr<quad_face> f) { return m_frames[f]; }
 		void add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y);
 		void pack_frames();
-		void build_mipmap();
 
-		void create_uv_layout() override;
+	private:
+		mipmap* m_mipmap;
+
+	public:
+		inline mipmap* get_mipmap() { return m_mipmap; }
+		void build_mipmap(unsigned int max_level);
 
 	};
 

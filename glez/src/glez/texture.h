@@ -46,10 +46,12 @@ namespace glez {
 	{
 		std::vector<texture*> levels;
 
+		mipmap() {}
+
 		mipmap(texture* base_tex);
 		~mipmap();
 
-		void add_level(unsigned int w, unsigned int h);
+		texture* add_level(unsigned int w, unsigned int h);
 	};
 
 }

@@ -78,11 +78,18 @@ exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path)
 
 	/* Graphics pipeline setup */
 	for (size_t i = 0; i < 4; i++) {
-		init_graphics(i, m_objs[i]->get_render_buffer()->uv_dim());
+		bool use_mipmap = (i == 0) || (i == 2);
+		init_graphics(i, m_objs[i]->get_render_buffer()->uv_dim(), use_mipmap);
 		m_objs[i]->create_uv_layout();
 		send_to_gpu(i, m_objs[i]->get_render_buffer());
 		send_to_gpu(i, m_objs[i]->get_texture());
 	}
+
+	/* Mipmaps */
+	generate_mipmap(0);
+
+	m_obj_mc->build_mipmap(10);
+	send_to_gpu(2, m_obj_mc->get_mipmap());
 }
 
 exp_scene::~exp_scene()
@@ -146,7 +153,7 @@ void exp_scene::transfer_colors()
 	}
 }
 
-void exp_scene::init_graphics(size_t idx, unsigned int uv_dim)
+void exp_scene::init_graphics(size_t idx, unsigned int uv_dim, bool use_mipmap)
 {
 	unsigned int stride = 6 + uv_dim;
 
@@ -166,7 +173,13 @@ void exp_scene::init_graphics(size_t idx, unsigned int uv_dim)
 
 	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	if (use_mipmap) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 10);
+	}
+	else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -195,6 +208,27 @@ void exp_scene::send_to_gpu(size_t idx, glez::texture* texture)
 		0,
 		GL_RGBA, GL_UNSIGNED_BYTE,
 		texture->data());
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void exp_scene::send_to_gpu(size_t idx, glez::mipmap* mipmap)
+{
+	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
+	for (size_t i = 1; i < mipmap->levels.size(); i++) {
+		glez::texture* tex = mipmap->levels[i];
+		glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, 
+			tex->width(), tex->height(), 
+			0, 
+			GL_RGBA, GL_UNSIGNED_BYTE, 
+			tex->data());
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void exp_scene::generate_mipmap(size_t idx)
+{
+	glBindTexture(GL_TEXTURE_2D, m_texIDs[idx]);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 

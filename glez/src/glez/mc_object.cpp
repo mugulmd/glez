@@ -4,26 +4,76 @@
 
 namespace glez {
 
-	void frame::set_pixel(texture* tex, unsigned int x, unsigned int y, const glm::u8vec4& color)
+	void frame::set_pixel(texture* tex, unsigned int x, unsigned int y, const glm::u8vec4& color, unsigned int level)
 	{
-		tex->set_pixel(tex->height() - 1 - (coord_scale.y + coord_offset.y + y), 
-			coord_scale.x + coord_offset.x + x, 
+		unsigned int scale = std::pow(2, level);
+		unsigned int scale_x = std::min(scale, res.x);
+		unsigned int scale_y = std::min(scale, res.y);
+		tex->set_pixel(tex->height() - 1 - ((coord_scale.y / scale_y) + coord_offset.y + y), 
+			(coord_scale.x / scale_x) + coord_offset.x + x, 
 			color);
 	}
 
-	glm::u8vec4 frame::get_pixel(texture* tex, unsigned int x, unsigned int y)
+	glm::u8vec4 frame::get_pixel(texture* tex, unsigned int x, unsigned int y, unsigned int level)
 	{
-		return tex->get_pixel(coord_scale.x + coord_offset.x + x,
-			coord_scale.y + coord_offset.y + y);
+		unsigned int scale = std::pow(2, level);
+		unsigned int scale_x = std::min(scale, res.x);
+		unsigned int scale_y = std::min(scale, res.y);
+		return tex->get_pixel(tex->height() - 1 - ((coord_scale.y / scale_y) + coord_offset.y + y),
+			(coord_scale.x / scale_x) + coord_offset.x + x);
+	}
+
+	glm::u8vec4 frame::get_weighted_avg(texture* tex, unsigned int x, unsigned int y, unsigned int level)
+	{
+		unsigned int scale = std::pow(2, level);
+		unsigned int scale_x = std::min(scale, res.x);
+		unsigned int scale_y = std::min(scale, res.y);
+
+		glm::u8vec4 c0 = get_pixel(tex, x, y, level);
+
+		float w1 = 0.f;
+		glm::u8vec4 c1(0, 0, 0, 0);
+		if (x > 0) {
+			c1 += get_pixel(tex, x - 1, y, level); w1 += 0.5f;
+		}
+		if (x < res.x / scale_x) {
+			c1 += get_pixel(tex, x + 1, y, level); w1 += 0.5f;
+		}
+		if (y > 0) {
+			c1 += get_pixel(tex, x, y - 1, level); w1 += 0.5f;
+		}
+		if (y < res.y / scale_y) {
+			c1 += get_pixel(tex, x, y + 1, level); w1 += 0.5f;
+		}
+
+		float w2 = 0.f;
+		glm::u8vec4 c2(0, 0, 0, 0);
+		if (x > 0 && y > 0) {
+			c2 += get_pixel(tex, x - 1, y - 1, level); w2 += 0.25f;
+		}
+		if (x > 0 && y < res.y / scale_y) {
+			c2 += get_pixel(tex, x - 1, y + 1, level); w2 += 0.25f;
+		}
+		if (x < res.x / scale_x && y > 0) {
+			c2 += get_pixel(tex, x + 1, y - 1, level); w2 += 0.25f;
+		}
+		if (x < res.x / scale_x && y < res.y / scale_y) {
+			c2 += get_pixel(tex, x + 1, y + 1, level); w2 += 0.25f;
+		}
+
+		return glm::u8vec4((glm::vec4(c0) + 0.5f * glm::vec4(c1) + 0.25f * glm::vec4(c2)) / (w1 + w2));
 	}
 
 	mc_object::mc_object(unsigned int init_res) :
 		abs_object(new texture(init_res, init_res), 4), 
-		m_tex_dim(init_res)
+		m_tex_dim(init_res), 
+		m_mipmap(new mipmap())
 	{}
 
 	mc_object::~mc_object()
-	{}
+	{
+		delete m_mipmap;
+	}
 
 	void mc_object::add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y)
 	{
@@ -83,11 +133,6 @@ namespace glez {
 		m_texture = new texture(m_tex_dim, m_tex_dim);
 	}
 
-	void mc_object::build_mipmap()
-	{
-		// TODO
-	}
-
 	void mc_object::create_uv_layout()
 	{
 		m_buffer->init_store(m_mesh->get_faces().size());
@@ -112,6 +157,78 @@ namespace glez {
 		}
 
 		notify_render_buffer_listeners();
+	}
+
+	void mc_object::build_mipmap(unsigned int max_level)
+	{
+		delete m_mipmap;
+		m_mipmap = new mipmap(m_texture);
+
+		for (unsigned int level = 1; level <= max_level; level++) {
+			texture* tex_prev = m_mipmap->levels.back();
+
+			unsigned int scale = std::pow(2, level);
+			unsigned int dim_x = 1;
+			unsigned int dim_y = 1;
+			for (std::shared_ptr<quad_face>& f : m_mesh->get_faces()) {
+				frame& fr = get_frame(f);
+				unsigned int scale_x = std::min(scale, fr.res.x);
+				unsigned int scale_y = std::min(scale, fr.res.y);
+				dim_x = std::max(dim_x, (fr.coord_scale.x + fr.res.x) / scale_x + fr.coord_offset.x);
+				dim_y = std::max(dim_y, (fr.coord_scale.y + fr.res.y) / scale_y + fr.coord_offset.y);
+			}
+			texture* tex = m_mipmap->add_level(dim_x, dim_y);
+
+			for (std::shared_ptr<quad_face>& f : m_mesh->get_faces()) {
+				frame& fr = get_frame(f);
+				unsigned int scale_x = std::min(scale, fr.res.x);
+				unsigned int scale_y = std::min(scale, fr.res.y);
+				// vertex colors
+				{
+					unsigned int x = 0;
+					unsigned int y = 0;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				{
+					unsigned int x = 0;
+					unsigned int y = fr.res.y / scale_y;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				{
+					unsigned int x = fr.res.x / scale_x;
+					unsigned int y = 0;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				{
+					unsigned int x = fr.res.x / scale_x;
+					unsigned int y = fr.res.y / scale_y;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				// edge colors
+				for (unsigned int x = 1; x < fr.res.x / scale_x; x++) {
+					unsigned int y = 0;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				for (unsigned int x = 1; x < fr.res.x / scale_x; x++) {
+					unsigned int y = fr.res.y / scale_y;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				for (unsigned int y = 1; y < fr.res.y / scale_y; y++) {
+					unsigned int x = 0;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				for (unsigned int y = 1; y < fr.res.y / scale_y; y++) {
+					unsigned int x = fr.res.x / scale_x;
+					fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+				}
+				// face colors
+				for (unsigned int x = 1; x < fr.res.x / scale_x; x++) {
+					for (unsigned int y = 1; y < fr.res.y / scale_y; y++) {
+						fr.set_pixel(tex, x, y, fr.get_weighted_avg(tex_prev, 2 * x, 2 * y, level - 1), level);
+					}
+				}
+			}
+		}
 	}
 
 }

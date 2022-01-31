@@ -36,9 +36,11 @@ private:
 	GLuint m_texIDs[4];
 	GLuint m_shaderIDs[4];
 
-	void init_graphics(size_t idx, unsigned int uv_dim);
+	void init_graphics(size_t idx, unsigned int uv_dim, bool use_mipmap);
 	void send_to_gpu(size_t idx, glez::render_buffer* buffer);
 	void send_to_gpu(size_t idx, glez::texture* texture);
+	void send_to_gpu(size_t idx, glez::mipmap* mipmap);
+	void generate_mipmap(size_t idx);
 	void render(size_t idx, glez::abs_object* obj);
 
 public:
