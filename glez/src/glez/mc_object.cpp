@@ -19,7 +19,7 @@ namespace glez {
 
 	mc_object::mc_object(unsigned int init_res) :
 		abs_object(new texture(init_res, init_res), 4), 
-		m_tex_dim(0)
+		m_tex_dim(init_res)
 	{}
 
 	mc_object::~mc_object()
@@ -81,6 +81,11 @@ namespace glez {
 
 		delete m_texture;
 		m_texture = new texture(m_tex_dim, m_tex_dim);
+	}
+
+	void mc_object::build_mipmap()
+	{
+		// TODO
 	}
 
 	void mc_object::create_uv_layout()

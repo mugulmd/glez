@@ -52,4 +52,21 @@ namespace glez {
 		return get_pixel(row, col);
 	}
 
+	mipmap::mipmap(texture* base_tex)
+	{
+		levels.push_back(base_tex);
+	}
+
+	mipmap::~mipmap()
+	{
+		for (size_t i = 1; i < levels.size(); i++) {
+			delete levels[i];
+		}
+	}
+
+	void mipmap::add_level(unsigned int w, unsigned int h)
+	{
+		levels.push_back(new texture(w, h));
+	}
+
 }

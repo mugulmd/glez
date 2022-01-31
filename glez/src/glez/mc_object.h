@@ -40,10 +40,9 @@ namespace glez {
 
 	public:
 		inline frame& get_frame(std::shared_ptr<quad_face> f) { return m_frames[f]; }
-
 		void add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y);
-
 		void pack_frames();
+		void build_mipmap();
 
 		void create_uv_layout() override;
 

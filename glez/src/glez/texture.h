@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "core.h"
 
 #include <glm/vec4.hpp>
@@ -38,6 +40,16 @@ namespace glez {
 
 		virtual void on_texture_change(texture* _texture) = 0;
 
+	};
+
+	struct GLEZ_API mipmap
+	{
+		std::vector<texture*> levels;
+
+		mipmap(texture* base_tex);
+		~mipmap();
+
+		void add_level(unsigned int w, unsigned int h);
 	};
 
 }
