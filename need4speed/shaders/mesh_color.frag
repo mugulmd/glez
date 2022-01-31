@@ -2,7 +2,7 @@
 
 in vec3 vs_position;
 in vec3 vs_normal;
-in vec2 vs_texCoord;
+in vec4 vs_texCoord;
 
 out vec4 fs_color;
 
@@ -12,7 +12,7 @@ vec3 light_pos = vec3(-3, 3, 10);
 
 void main()
 {
-	vec2 tex_coord = vec2(vs_texCoord.s, 1.0 - vs_texCoord.t);
+	vec2 tex_coord = vec2(vs_texCoord.x + vs_texCoord.z, 1.0 - (vs_texCoord.y + vs_texCoord.w));
 	vec4 tex_color = texture(my_texture, tex_coord);
 
 	float ambiant = 0.2;

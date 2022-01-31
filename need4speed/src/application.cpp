@@ -26,13 +26,15 @@ static glm::vec2 ref_pos;
 
 int main(int argc, char** argv) 
 {
+    if (argc != 3) return -1;
+
     if (!initGLFW()) return -1;
     if (!initWindow()) return -1;
     if (!initGLEW()) return -1;
     if (!initGL()) return -1;
 
 	glez::init();
-	scene = new exp_scene();
+	scene = new exp_scene(argv[1], argv[2]);
     scene->get_camera()->set_proj_props(screenWidth, screenHeight);
 
     while (!glfwWindowShouldClose(window)) {
@@ -134,5 +136,7 @@ void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos)
 
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods)
 {
-    // TODO
+    if (key == GLFW_KEY_TAB && action == GLFW_RELEASE) {
+        scene->change_displayed_obj();
+    }
 }

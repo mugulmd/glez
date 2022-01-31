@@ -1,10 +1,13 @@
 #include <memory>
 #include <vector>
 #include <array>
+
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <sstream>
+
+#include <cmath>
 
 #include "exp_scene.h"
 
@@ -19,30 +22,126 @@ void load_OBJ(const char* objFilePath, glez::unwrapped_object* obj);
 GLuint load_shader(const char* shaderPath, GLenum shaderType);
 GLuint make_shader_program(std::vector<GLuint> shaderIDs);
 glez::texture* load_texture(const char* imgFilePath);
+float quad_area(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d);
+void make_plane(glez::unwrapped_object* plane);
 
-exp_scene::exp_scene()
+exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path)
 {
-	m_obj = new glez::unwrapped_object(load_texture("res/tex_tbone_00.png"));
-	load_OBJ("res/tbone.obj", m_obj);
+	glGenBuffers(4, m_vboIDs);
+	glGenBuffers(4, m_eboIDs);
+	glGenVertexArrays(4, m_vaoIDs);
+	glGenTextures(4, m_texIDs);
 
-	glGenBuffers(2, m_vboIDs);
-	glGenBuffers(2, m_eboIDs);
-	glGenVertexArrays(2, m_vaoIDs);
-	glGenTextures(2, m_texIDs);
-	init_graphics(0, m_obj->get_render_buffer()->uv_dim());
-
+	/* Shaders */
 	GLuint vert_bland = load_shader("shaders/unwrap.vert", GL_VERTEX_SHADER);
 	GLuint frag_bland = load_shader("shaders/unwrap.frag", GL_FRAGMENT_SHADER);
-	m_shaderIDs[0] = make_shader_program({vert_bland, frag_bland});
+	m_shaderIDs[0] = make_shader_program({ vert_bland, frag_bland });
 
-	m_obj->create_uv_layout();
-	send_to_gpu(0, m_obj->get_render_buffer());
-	send_to_gpu(0, m_obj->get_texture());
+	GLuint vert_mc = load_shader("shaders/mesh_color.vert", GL_VERTEX_SHADER);
+	GLuint frag_mc = load_shader("shaders/mesh_color.frag", GL_FRAGMENT_SHADER);
+	m_shaderIDs[2] = make_shader_program({ vert_mc, frag_mc });
+
+	m_shaderIDs[1] = m_shaderIDs[0];
+	m_shaderIDs[3] = m_shaderIDs[0];
+
+	/* Unwrapped object */
+	m_obj_unwrapped = new glez::unwrapped_object(load_texture(img_file_path));
+	load_OBJ(obj_file_path, m_obj_unwrapped);
+	m_objs[0] = m_obj_unwrapped;
+
+	/* Base (unwrapped) texture visualizer */
+	m_plane_unwrapped = new glez::unwrapped_object(new glez::texture(
+		m_obj_unwrapped->get_texture()->width(),
+		m_obj_unwrapped->get_texture()->height(),
+		m_obj_unwrapped->get_texture()->data()
+	));
+	make_plane(m_plane_unwrapped);
+	m_objs[1] = m_plane_unwrapped;
+
+	/* Mesh Color object */
+	m_obj_mc = new glez::mc_object();
+	transfer_res();
+	m_obj_mc->pack_frames();
+	transfer_colors();
+	m_objs[2] = m_obj_mc;
+
+	/* Mesh Color texture visualizer */
+	m_plane_mc = new glez::unwrapped_object(new glez::texture(
+		m_obj_mc->get_texture()->width(), 
+		m_obj_mc->get_texture()->height(), 
+		m_obj_mc->get_texture()->data()
+	));
+	make_plane(m_plane_mc);
+	m_objs[3] = m_plane_mc;
+
+	/* Graphics pipeline setup */
+	for (size_t i = 0; i < 4; i++) {
+		init_graphics(i, m_objs[i]->get_render_buffer()->uv_dim());
+		m_objs[i]->create_uv_layout();
+		send_to_gpu(i, m_objs[i]->get_render_buffer());
+		send_to_gpu(i, m_objs[i]->get_texture());
+	}
 }
 
 exp_scene::~exp_scene()
 {
-	delete m_obj;
+	delete m_obj_unwrapped;
+	delete m_obj_mc;
+}
+
+unsigned int exp_scene::res_unwrapped(std::shared_ptr<glez::quad_face> face)
+{
+	// count number of pixels in quad
+	// first approximation : use unwrapped quad area for counting pixels 
+	float area = quad_area(
+		m_obj_unwrapped->get_tex_coord(face->half_edges[0]),
+		m_obj_unwrapped->get_tex_coord(face->half_edges[1]),
+		m_obj_unwrapped->get_tex_coord(face->half_edges[2]),
+		m_obj_unwrapped->get_tex_coord(face->half_edges[3])
+	);
+	float n_pixels = std::floor(area * m_obj_unwrapped->get_texture()->width() * m_obj_unwrapped->get_texture()->height());
+	unsigned int r = (unsigned int)(std::ceil(std::log2(1.f + std::sqrt(n_pixels))));
+	return std::pow(2, r);
+}
+
+void exp_scene::transfer_res()
+{
+	m_obj_mc->get_mesh()->get_vertices() = m_obj_unwrapped->get_mesh()->get_vertices();
+
+	for (std::shared_ptr<glez::quad_face>& f : m_obj_unwrapped->get_mesh()->get_faces()) {
+		unsigned int res = res_unwrapped(f);
+		m_obj_mc->add_face(f, res, res);
+	}
+}
+
+glm::u8vec4 exp_scene::color_unwrapped(std::shared_ptr<glez::quad_face> face, glm::vec2 coef)
+{
+	glm::vec2& a = m_obj_unwrapped->get_tex_coord(face->half_edges[0]);
+	glm::vec2& b = m_obj_unwrapped->get_tex_coord(face->half_edges[1]);
+	glm::vec2& c = m_obj_unwrapped->get_tex_coord(face->half_edges[2]);
+	glm::vec2& d = m_obj_unwrapped->get_tex_coord(face->half_edges[3]);
+
+	glm::vec2 tex_coord = a * (1 - coef.x) * (1 - coef.y)
+		+ b * coef.x * (1 - coef.y)
+		+ d * (1 - coef.x) * coef.y
+		+ c * coef.x * coef.y;
+
+	return m_obj_unwrapped->get_texture()->get_pixel(tex_coord.x, 1.f - tex_coord.y);
+}
+
+void exp_scene::transfer_colors()
+{
+	for (std::shared_ptr<glez::quad_face>& f : m_obj_mc->get_mesh()->get_faces()) {
+		glez::frame& frame = m_obj_mc->get_frame(f);
+		for (unsigned int x = 0; x <= frame.res.x; x++) {
+			float alpha = (float)x / (float)frame.res.x;
+			for (unsigned int y = 0; y <= frame.res.y; y++) {
+				float beta = (float)y / (float)frame.res.y;
+				frame.set_pixel(m_obj_mc->get_texture(),
+					x, y, color_unwrapped(f, glm::vec2(alpha, beta)));
+			}
+		}
+	}
 }
 
 void exp_scene::init_graphics(size_t idx, unsigned int uv_dim)
@@ -97,7 +196,7 @@ void exp_scene::send_to_gpu(size_t idx, glez::texture* texture)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void exp_scene::render(size_t idx)
+void exp_scene::render(size_t idx, glez::abs_object* obj)
 {
 	glUseProgram(m_shaderIDs[idx]);
 
@@ -110,7 +209,7 @@ void exp_scene::render(size_t idx)
 	glBindVertexArray(m_vaoIDs[idx]);
 	// TODO : draw object depending on idx
 	glDrawElements(GL_TRIANGLES,
-		m_obj->get_render_buffer()->face_indices().size(),
+		obj->get_render_buffer()->face_indices().size(),
 		GL_UNSIGNED_INT, NULL);
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -118,7 +217,7 @@ void exp_scene::render(size_t idx)
 
 void exp_scene::display()
 {
-	render(0);
+	render(m_idx_display, m_objs[m_idx_display]);
 }
 
 /* Utils */
@@ -300,4 +399,30 @@ glez::texture* load_texture(const char* imgFilePath)
 	std::cout << "w: " << w << ", h: " << h << ", n: " << n << std::endl;
 	glez::texture* texture = new glez::texture(w, h, img);
 	return texture;
+}
+
+float quad_area(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d)
+{
+	glm::vec2 diag1 = c - a;
+	glm::vec2 diag2 = b - d;
+	float dot = glm::dot(glm::normalize(diag1), glm::normalize(diag2));
+	return 0.5f * glm::length(diag1) * glm::length(diag2) * std::sin(std::acos(dot));
+}
+
+void make_plane(glez::unwrapped_object* plane)
+{
+	plane->get_mesh()->add_vertex(std::make_shared<glez::vertex>(glm::vec3(-1, -1, 0)));
+	plane->get_mesh()->add_vertex(std::make_shared<glez::vertex>(glm::vec3(-1, 1, 0)));
+	plane->get_mesh()->add_vertex(std::make_shared<glez::vertex>(glm::vec3(1, 1, 0)));
+	plane->get_mesh()->add_vertex(std::make_shared<glez::vertex>(glm::vec3(1, -1, 0)));
+	plane->add_face(
+		glez::quad_face::make_face(
+			{ plane->get_mesh()->get_vertex(0),
+			plane->get_mesh()->get_vertex(1),
+			plane->get_mesh()->get_vertex(2),
+			plane->get_mesh()->get_vertex(3) },
+			glm::vec3(0, 0, 1)
+		),
+		{ glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0) }
+	);
 }

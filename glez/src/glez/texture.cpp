@@ -9,6 +9,9 @@ namespace glez {
 	{
 		size_t length = w * h * 4;
 		m_data = new unsigned char[length];
+		for (size_t i = 0; i < length; i++) {
+			m_data[i] = 0;
+		}
 	}
 
 	texture::texture(unsigned int w, unsigned int h, unsigned char* _data) :

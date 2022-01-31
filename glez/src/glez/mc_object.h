@@ -43,6 +43,8 @@ namespace glez {
 
 		void add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y);
 
+		void pack_frames();
+
 		void create_uv_layout() override;
 
 	};
