@@ -99,8 +99,12 @@ namespace glez {
 			unsigned int row_height = 0;
 			bool success = true;
 			for (std::shared_ptr<quad_face>& f : faces) {
-				// reach end of row
-				if (u_s.x + u_delta.x + m_frames[f].res.x >= m_tex_dim - 1) {
+				frame& fr = get_frame(f);
+				unsigned int scale = std::pow(2, m_max_level);
+				unsigned int scale_x = std::min(fr.res.x, scale);
+				unsigned int scale_y = std::min(fr.res.y, scale);
+				// reach end of row (for all mipmap levels)
+				if (u_s.x + fr.res.x + scale_x * (u_delta.x + 1) >= m_tex_dim) {
 					// go to next available row
 					u_s.x = 0;
 					u_s.y += row_height;
@@ -108,29 +112,30 @@ namespace glez {
 					u_delta.y += b;
 					row_height = 0;
 				}
-				// check if texture size is not too small
-				if (u_s.y + u_delta.y + m_frames[f].res.y >= m_tex_dim - 1) {
+				// check if texture size is too small
+				if (u_s.y + fr.res.y + scale_y * (u_delta.y + 1) >= m_tex_dim) {
 					// take a bigger texture and restart packing
 					m_tex_dim *= 2;
 					success = false;
 					break;
 				}
 				// place texture coordinates for each quad corner
-				m_frames[f].coord_scale = u_s;
-				m_frames[f].coord_offset = u_delta;
+				fr.coord_scale = u_s;
+				fr.coord_offset = u_delta;
 				// move to next position
-				u_s.x += m_frames[f].res.x;
+				u_s.x += fr.res.x;
 				u_delta.x += b;
-				row_height = std::max(row_height, m_frames[f].res.y);
+				row_height = std::max(row_height, fr.res.y);
 			}
 			if (success) {
 				break;
 			}
 		}
-		GLEZ_INFO("mesh color texture packing done: texture dim={}", m_tex_dim);
 
 		delete m_texture;
 		m_texture = new texture(m_tex_dim, m_tex_dim);
+
+		GLEZ_INFO("mesh color texture packing done: texture dim={}", m_tex_dim);
 	}
 
 	void mc_object::create_uv_layout()
@@ -159,12 +164,12 @@ namespace glez {
 		notify_render_buffer_listeners();
 	}
 
-	void mc_object::build_mipmap(unsigned int max_level)
+	void mc_object::build_mipmap()
 	{
 		delete m_mipmap;
 		m_mipmap = new mipmap(m_texture);
 
-		for (unsigned int level = 1; level <= max_level; level++) {
+		for (unsigned int level = 1; level <= m_max_level; level++) {
 			texture* tex_prev = m_mipmap->levels.back();
 
 			unsigned int scale_prev = std::pow(2, level - 1);
@@ -183,6 +188,7 @@ namespace glez {
 				}
 			}
 			texture* tex = m_mipmap->add_level(dim, dim);
+			GLEZ_TRACE("created mipmap level {} with dim {}", level, dim);
 
 			for (std::shared_ptr<quad_face>& f : m_mesh->get_faces()) {
 				frame& fr = get_frame(f);

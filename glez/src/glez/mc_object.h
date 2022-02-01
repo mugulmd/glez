@@ -40,18 +40,20 @@ namespace glez {
 	private:
 		std::unordered_map<std::shared_ptr<quad_face>, frame> m_frames;
 		unsigned int m_tex_dim;
-
-	public:
-		inline frame& get_frame(std::shared_ptr<quad_face> f) { return m_frames[f]; }
-		void add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y);
-		void pack_frames();
-
-	private:
+		size_t m_max_level = 5;
 		mipmap* m_mipmap;
 
 	public:
+		void add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y);
+		inline frame& get_frame(std::shared_ptr<quad_face> f) { return m_frames[f]; }
+
+		inline void set_max_level(size_t level) { m_max_level = level; }
+		inline size_t get_max_level() { return m_max_level; }
+
+		void pack_frames();
+
 		inline mipmap* get_mipmap() { return m_mipmap; }
-		void build_mipmap(unsigned int max_level);
+		void build_mipmap();
 
 	};
 
