@@ -104,7 +104,7 @@ namespace glez {
 				unsigned int scale_x = std::min(fr.res.x, scale);
 				unsigned int scale_y = std::min(fr.res.y, scale);
 				// reach end of row (for all mipmap levels)
-				if (u_s.x + fr.res.x + scale_x * (u_delta.x + 1) >= m_tex_dim) {
+				if ((u_s.x + fr.res.x) / scale_x + u_delta.x + 1 >= (m_tex_dim / scale)) {
 					// go to next available row
 					u_s.x = 0;
 					u_s.y += row_height;
@@ -113,7 +113,7 @@ namespace glez {
 					row_height = 0;
 				}
 				// check if texture size is too small
-				if (u_s.y + fr.res.y + scale_y * (u_delta.y + 1) >= m_tex_dim) {
+				if ((u_s.y + fr.res.y) / scale_y + u_delta.y + 1 >= (m_tex_dim / scale)) {
 					// take a bigger texture and restart packing
 					m_tex_dim *= 2;
 					success = false;
@@ -175,18 +175,7 @@ namespace glez {
 			unsigned int scale_prev = std::pow(2, level - 1);
 			unsigned int scale = std::pow(2, level);
 
-			unsigned int dim = 1;
-			for (std::shared_ptr<quad_face>& f : m_mesh->get_faces()) {
-				frame& fr = get_frame(f);
-				unsigned int scale_x = std::min(scale, fr.res.x);
-				unsigned int scale_y = std::min(scale, fr.res.y);
-				while (dim < (fr.coord_scale.x + fr.res.x) / scale_x + fr.coord_offset.x + 1) {
-					dim *= 2;
-				}
-				while (dim < (fr.coord_scale.y + fr.res.y) / scale_y + fr.coord_offset.y + 1) {
-					dim *= 2;
-				}
-			}
+			unsigned int dim = m_tex_dim / scale;
 			texture* tex = m_mipmap->add_level(dim, dim);
 			GLEZ_TRACE("created mipmap level {} with dim {}", level, dim);
 
