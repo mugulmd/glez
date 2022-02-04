@@ -33,15 +33,6 @@ namespace glez {
 
 	};
 
-	class GLEZ_API texture_listener
-	{
-	public:
-		virtual ~texture_listener() {}
-
-		virtual void on_texture_change(texture* _texture) = 0;
-
-	};
-
 	struct GLEZ_API mipmap
 	{
 		std::vector<texture*> levels;

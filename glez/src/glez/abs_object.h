@@ -28,17 +28,6 @@ namespace glez {
 
 		void log_info();
 
-	protected:
-		std::list<render_buffer_listener*> m_buffer_listeners;
-		std::list<texture_listener*> m_tex_listeners;
-
-		void notify_render_buffer_listeners();
-		void notify_texture_listeners();
-
-	public:
-		void add_render_buffer_listener(render_buffer_listener *listener);
-		void add_texture_listener(texture_listener *listener);
-
 	public:
 		virtual void create_uv_layout() = 0;
 

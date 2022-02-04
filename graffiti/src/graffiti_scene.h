@@ -4,6 +4,9 @@
 
 #include "glez.h"
 
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
+
 class graffiti_scene : public glez::scene
 {
 private:
@@ -14,6 +17,8 @@ private:
 public:
 	graffiti_scene();
 	~graffiti_scene();
+
+	inline void log_object_info() { m_obj->log_info(); }
 
 private:
 	GLuint m_vbo;
@@ -30,5 +35,13 @@ private:
 
 public:
 	void display();
+
+private:
+	glm::u8vec4 m_color = glm::u8vec4(255, 0, 0, 255);
+
+public:
+	inline void set_color(glm::u8vec4 color) { m_color = color; }
+	void fill(const glm::vec2& pick_coords);
+	void spraypaint(const glm::vec2& pick_coords);
 
 };

@@ -10,9 +10,9 @@ uniform sampler2D my_texture;
 
 void main()
 {
-	//vec2 tex_coord = vec2(vs_texCoord.x + vs_texCoord.z, 1.0 - (vs_texCoord.y + vs_texCoord.w));
+	vec2 tex_coord = vec2(vs_texCoord.x + vs_texCoord.z, 1.0 - (vs_texCoord.y + vs_texCoord.w));
 
-	//vec4 tex_color = texture(my_texture, tex_coord);
+	vec4 tex_color = texture(my_texture, tex_coord);
 
-	fs_color = vec4(0.0, 0.0, 1.0, 1.0);
+	fs_color = tex_color;
 }

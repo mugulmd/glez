@@ -14,6 +14,11 @@ namespace glez {
 			color);
 	}
 
+	void frame::set_pixel(texture* tex, float x, float y, const glm::u8vec4& color, unsigned int level)
+	{
+		set_pixel(tex, (unsigned int)(x * res.x), (unsigned int)(y * res.y), color, level);
+	}
+
 	glm::u8vec4 frame::get_pixel(texture* tex, unsigned int x, unsigned int y, unsigned int level)
 	{
 		unsigned int scale = std::pow(2, level);
@@ -21,6 +26,11 @@ namespace glez {
 		unsigned int scale_y = std::min(scale, res.y);
 		return tex->get_pixel(tex->height() - 1 - ((coord_scale.y / scale_y) + coord_offset.y + y),
 			(coord_scale.x / scale_x) + coord_offset.x + x);
+	}
+
+	glm::u8vec4 frame::get_pixel(texture* tex, float x, float y, unsigned int level)
+	{
+		return get_pixel(tex, (unsigned int)(x * res.x), (unsigned int)(y * res.y), level);
 	}
 
 	glm::u8vec4 frame::get_weighted_avg(texture* tex, unsigned int x, unsigned int y, unsigned int level)
@@ -160,8 +170,6 @@ namespace glez {
 			}
 			m_buffer->store_face(f, face_uv);
 		}
-
-		notify_render_buffer_listeners();
 	}
 
 	void mc_object::build_mipmap()
@@ -254,13 +262,16 @@ namespace glez {
 	void mc_object::fill(std::shared_ptr<quad_face> f, const glm::u8vec4& color)
 	{
 		frame& fr = get_frame(f);
-		for (size_t x = 0; x < fr.res.x; x++) {
-			for (size_t y = 0; y < fr.res.y; y++) {
+		for (unsigned int x = 0; x < fr.res.x; x++) {
+			for (unsigned int y = 0; y < fr.res.y; y++) {
 				fr.set_pixel(m_texture, x, y, color);
 			}
 		}
+	}
 
-		notify_texture_listeners();
+	void mc_object::paint(std::shared_ptr<quad_face> f, const glm::vec2& coords, const glm::u8vec4& color)
+	{
+		m_frames[f].set_pixel(m_texture, coords.x, coords.y, color);
 	}
 
 }

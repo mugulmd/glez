@@ -24,8 +24,11 @@ namespace glez {
 		inline size_t size() { return res.x * res.y; }
 
 		void set_pixel(texture* tex, unsigned int x, unsigned int y, const glm::u8vec4& color, unsigned int level = 0);
+		void set_pixel(texture* tex, float x, float y, const glm::u8vec4& color, unsigned int level = 0);
 
 		glm::u8vec4 get_pixel(texture* tex, unsigned int x, unsigned int y, unsigned int level = 0);
+		glm::u8vec4 get_pixel(texture* tex, float x, float y, unsigned int level = 0);
+
 		glm::u8vec4 get_weighted_avg(texture* tex, unsigned int x, unsigned int y, unsigned int level = 0);
 	};
 
@@ -57,6 +60,7 @@ namespace glez {
 
 	public:
 		void fill(std::shared_ptr<quad_face> f, const glm::u8vec4& color);
+		void paint(std::shared_ptr<quad_face> f, const glm::vec2& coords, const glm::u8vec4& color);
 
 	};
 

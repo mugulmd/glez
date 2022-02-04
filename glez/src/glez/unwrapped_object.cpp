@@ -33,8 +33,6 @@ namespace glez {
 			}
 			m_buffer->store_face(f, face_uv);
 		}
-
-		notify_render_buffer_listeners();
 	}
 
 }

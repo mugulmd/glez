@@ -36,13 +36,4 @@ namespace glez {
 
 	};
 
-	class GLEZ_API render_buffer_listener
-	{
-	public:
-		virtual ~render_buffer_listener() {}
-
-		virtual void on_render_buffer_change(render_buffer* _buffer) = 0;
-
-	};
-
 }

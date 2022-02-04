@@ -1,6 +1,7 @@
 #include <memory>
 #include <array>
 #include <vector>
+#include <random>
 
 #include <iostream>
 #include <string>
@@ -9,6 +10,7 @@
 
 #include "graffiti_scene.h"
 
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -214,6 +216,39 @@ void graffiti_scene::display()
 {
 	render_faces();
 	render_edges();
+}
+
+void graffiti_scene::fill(const glm::vec2& pick_coords)
+{
+	glez::ray ray = get_camera()->cast_ray_to(pick_coords);
+	std::shared_ptr<glez::quad_face> f = m_obj->get_mesh()->pick_face(ray);
+	if (f) {
+		m_obj->fill(f, m_color);
+	}
+
+	send_to_gpu(m_obj->get_texture());
+}
+
+void graffiti_scene::spraypaint(const glm::vec2& pick_coords)
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(-1.f, 1.f);
+
+	for (unsigned int iter = 0; iter < 10; iter++) {
+		float dist;
+		glm::vec2 coords;
+		float theta = dis(gen) * 3.14f;
+		float r = dis(gen) * 0.1f;
+		glm::vec2 offset(std::cos(theta) * r, std::sin(theta) * r);
+		glez::ray ray = get_camera()->cast_ray_to(pick_coords + offset);
+		std::shared_ptr<glez::quad_face> f = m_obj->get_mesh()->pick_face(ray, dist, coords);
+		if (f) {
+			m_obj->paint(f, coords, m_color);
+		}
+	}
+
+	send_to_gpu(m_obj->get_texture());
 }
 
 /* Utils */
