@@ -251,4 +251,16 @@ namespace glez {
 		}
 	}
 
+	void mc_object::fill(std::shared_ptr<quad_face> f, const glm::u8vec4& color)
+	{
+		frame& fr = get_frame(f);
+		for (size_t x = 0; x < fr.res.x; x++) {
+			for (size_t y = 0; y < fr.res.y; y++) {
+				fr.set_pixel(m_texture, x, y, color);
+			}
+		}
+
+		notify_texture_listeners();
+	}
+
 }

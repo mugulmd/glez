@@ -19,8 +19,8 @@ void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods
 void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos);
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods);
 
-static float screenWidth = 1200.f;
-static float screenHeight = 900.f;
+static float screenWidth = 900.f;
+static float screenHeight = 600.f;
 static GLFWwindow* window;
 static exp_scene* scene;
 static bool is_dragging = false;

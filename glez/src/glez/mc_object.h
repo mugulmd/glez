@@ -55,6 +55,9 @@ namespace glez {
 		inline mipmap* get_mipmap() { return m_mipmap; }
 		void build_mipmap();
 
+	public:
+		void fill(std::shared_ptr<quad_face> f, const glm::u8vec4& color);
+
 	};
 
 }
