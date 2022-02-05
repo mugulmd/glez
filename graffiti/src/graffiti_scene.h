@@ -36,12 +36,8 @@ private:
 public:
 	void display();
 
-private:
-	glm::u8vec4 m_color = glm::u8vec4(255, 0, 0, 255);
-
 public:
-	inline void set_color(glm::u8vec4 color) { m_color = color; }
-	void fill(const glm::vec2& pick_coords);
-	void spraypaint(const glm::vec2& pick_coords);
+	void fill(const glm::vec2& pick_coords, const glm::u8vec4& color);
+	void spraypaint(const glm::vec2& pick_coords, const glm::u8vec4& color, const float& radius);
 
 };

@@ -218,18 +218,18 @@ void graffiti_scene::display()
 	render_edges();
 }
 
-void graffiti_scene::fill(const glm::vec2& pick_coords)
+void graffiti_scene::fill(const glm::vec2& pick_coords, const glm::u8vec4& color)
 {
 	glez::ray ray = get_camera()->cast_ray_to(pick_coords);
 	std::shared_ptr<glez::quad_face> f = m_obj->get_mesh()->pick_face(ray);
 	if (f) {
-		m_obj->fill(f, m_color);
+		m_obj->fill(f, color);
 	}
 
 	send_to_gpu(m_obj->get_texture());
 }
 
-void graffiti_scene::spraypaint(const glm::vec2& pick_coords)
+void graffiti_scene::spraypaint(const glm::vec2& pick_coords, const glm::u8vec4& color, const float& radius)
 {
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -239,12 +239,12 @@ void graffiti_scene::spraypaint(const glm::vec2& pick_coords)
 		float dist;
 		glm::vec2 coords;
 		float theta = dis(gen) * 3.14f;
-		float r = dis(gen) * 0.1f;
+		float r = dis(gen) * radius;
 		glm::vec2 offset(std::cos(theta) * r, std::sin(theta) * r);
 		glez::ray ray = get_camera()->cast_ray_to(pick_coords + offset);
 		std::shared_ptr<glez::quad_face> f = m_obj->get_mesh()->pick_face(ray, dist, coords);
 		if (f) {
-			m_obj->paint(f, coords, m_color);
+			m_obj->paint(f, coords, color);
 		}
 	}
 

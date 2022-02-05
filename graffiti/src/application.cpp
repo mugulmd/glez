@@ -1,12 +1,18 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <iostream>
+#include <string>
 
 #include "glez.h"
 #include "graffiti_scene.h"
 
 #include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 /* Core program */
 
@@ -19,21 +25,25 @@ bool initGLFW();
 bool initWindow();
 bool initGLEW();
 bool initGL();
+bool initImGui();
 void scroll_callback(GLFWwindow* _window, double xoffset, double yoffset);
 void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods);
 void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos);
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods);
 void set_activity(Activity _activity);
+std::string activity_to_str(Activity _activity);
 
 static float screenWidth = 900.f;
 static float screenHeight = 600.f;
 static GLFWwindow* window;
 static graffiti_scene* scene;
 
-static Activity activity = Activity::Fill;
+static Activity activity = Activity::Select;
 static glm::vec2 ref_pos;
 static bool is_dragging = false;
 static bool is_rotating = false;
+static float paint_color[4] {1.f, 0.f, 0.f, 1.f};
+static float spray_radius = 0.01f;
 
 int main(int argc, char** argv)
 {
@@ -41,6 +51,7 @@ int main(int argc, char** argv)
     if (!initWindow()) return -1;
     if (!initGLEW()) return -1;
     if (!initGL()) return -1;
+    if (!initImGui()) return -1;
 
     glez::init();
     scene = new graffiti_scene();
@@ -49,11 +60,28 @@ int main(int argc, char** argv)
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
         scene->display();
+
+        ImGui::Begin("Tools");
+        ImGui::Text(activity_to_str(activity).c_str());
+        ImGui::ColorEdit4("Paint Color", paint_color);
+        ImGui::SliderFloat("Spray Radius", &spray_radius, 0.001f, 0.1f);
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     delete scene;
@@ -105,6 +133,17 @@ bool initGL()
     return true;
 }
 
+bool initImGui()
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 450 core");
+    return true;
+}
+
 /* Callbacks */
 
 void scroll_callback(GLFWwindow* _window, double xoffset, double yoffset)
@@ -128,10 +167,17 @@ void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods
             else {
                 switch (activity) {
                 case Activity::Fill:
-                    scene->fill(ref_pos);
+                    scene->fill(
+                        ref_pos, 
+                        glm::u8vec4(255 * paint_color[0], 255 * paint_color[1], 255 * paint_color[2], 255 * paint_color[3])
+                    );
                     break;
                 case Activity::Paint:
-                    scene->spraypaint(ref_pos);
+                    scene->spraypaint(
+                        ref_pos, 
+                        glm::u8vec4(255 * paint_color[0], 255 * paint_color[1], 255 * paint_color[2], 255 * paint_color[3]), 
+                        spray_radius
+                    );
                     break;
                 default:
                     break;
@@ -159,7 +205,11 @@ void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos)
         else {
             switch (activity) {
             case Activity::Paint:
-                scene->spraypaint(cur_pos);
+                scene->spraypaint(
+                    cur_pos, 
+                    glm::u8vec4(255 * paint_color[0], 255 * paint_color[1], 255 * paint_color[2], 255 * paint_color[3]),
+                    spray_radius
+                );
                 break;
             default:
                 break;
@@ -212,7 +262,34 @@ void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mo
     }
 }
 
+/* Utility */
+
 void set_activity(Activity _activity)
 {
     activity = _activity;
+}
+
+std::string activity_to_str(Activity _activity)
+{
+    switch (_activity)
+    {
+    case Activity::Select:
+        return "Select";
+        break;
+    case Activity::Fill:
+        return "Fill";
+        break;
+    case Activity::Paint:
+        return "Spray Paint";
+        break;
+    case Activity::Extrude:
+        return "Extrude";
+        break;
+    case Activity::Cut:
+        return "Loop Cut";
+        break;
+    case Activity::Displace:
+        return "Displace";
+        break;
+    }
 }

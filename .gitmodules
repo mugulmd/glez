@@ -7,3 +7,6 @@
 [submodule "need4speed/thirdparty/stb"]
 	path = need4speed/thirdparty/stb
 	url = https://github.com/nothings/stb
+[submodule "graffiti/thirdparty/imgui"]
+	path = graffiti/thirdparty/imgui
+	url = https://github.com/ocornut/imgui
