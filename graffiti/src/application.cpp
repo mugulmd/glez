@@ -166,6 +166,10 @@ void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods
             }
             else {
                 switch (activity) {
+                case Activity::Select:
+                    if (mods == GLFW_MOD_SHIFT) scene->add_to_selection(ref_pos);
+                    else scene->set_selection(ref_pos);
+                    break;
                 case Activity::Fill:
                     scene->fill(
                         ref_pos, 

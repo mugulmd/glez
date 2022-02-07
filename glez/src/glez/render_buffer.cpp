@@ -14,6 +14,7 @@ namespace glez {
 		m_face_indices = std::vector<unsigned int>(n_faces * 6);
 		m_edge_indices = std::vector<unsigned int>(n_faces * 8);
 		m_face_counter = 0;
+		m_counters.clear();
 	}
 
 	void render_buffer::store_face(std::shared_ptr<quad_face> face, std::vector<float> tex_coords)
@@ -48,6 +49,7 @@ namespace glez {
 			m_edge_indices[idx] = v_idx;
 		}
 
+		m_counters[face] = m_face_counter;
 		m_face_counter++;
 	}
 

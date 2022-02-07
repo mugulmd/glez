@@ -26,8 +26,10 @@ graffiti_scene::graffiti_scene() :
 	glGenBuffers(1, &m_vbo);
 	glGenBuffers(1, &m_ebo_faces);
 	glGenBuffers(1, &m_ebo_edges);
+	glGenBuffers(1, &m_ebo_selection);
 	glGenVertexArrays(1, &m_vao_faces);
 	glGenVertexArrays(1, &m_vao_edges);
+	glGenVertexArrays(1, &m_vao_selection);
 	glGenTextures(1, &m_gltex);
 
 	init_graphics();
@@ -54,10 +56,15 @@ graffiti_scene::graffiti_scene() :
 		m_obj->fill(f, base_color);
 	}
 	send_to_gpu(m_obj->get_texture());
+
+	/* Selection */
+	m_selection = new selection(m_obj);
+	send_to_gpu(m_selection);
 }
 
 graffiti_scene::~graffiti_scene()
 {
+	delete m_selection;
 	delete m_obj;
 }
 
@@ -139,6 +146,14 @@ void graffiti_scene::init_graphics()
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 
+	glBindVertexArray(m_vao_selection);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo_selection);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+
 	glBindTexture(GL_TEXTURE_2D, m_gltex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -180,6 +195,16 @@ void graffiti_scene::send_to_gpu(glez::texture* texture)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void graffiti_scene::send_to_gpu(selection* _selection)
+{
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo_selection);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		_selection->get_indices().size() * sizeof(unsigned int),
+		_selection->get_indices().data(),
+		GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
 void graffiti_scene::render_faces()
 {
 	glUseProgram(m_shader_mc);
@@ -212,8 +237,24 @@ void graffiti_scene::render_edges()
 	glBindVertexArray(0);
 }
 
+void graffiti_scene::render_selection()
+{
+	glUseProgram(m_shader_bland);
+	GLint viewLoc = glGetUniformLocation(m_shader_bland, "view");
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_view()));
+	GLint projLoc = glGetUniformLocation(m_shader_bland, "projection");
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(get_camera()->get_proj()));
+
+	glBindVertexArray(m_vao_selection);
+	glDrawElements(GL_TRIANGLES,
+		m_selection->get_indices().size(),
+		GL_UNSIGNED_INT, NULL);
+	glBindVertexArray(0);
+}
+
 void graffiti_scene::display()
 {
+	render_selection();
 	render_faces();
 	render_edges();
 }
@@ -249,6 +290,42 @@ void graffiti_scene::spraypaint(const glm::vec2& pick_coords, const glm::u8vec4&
 	}
 
 	send_to_gpu(m_obj->get_texture());
+}
+
+void graffiti_scene::set_selection(const glm::vec2& pick_coords)
+{
+	glez::ray ray = get_camera()->cast_ray_to(pick_coords);
+	std::shared_ptr<glez::quad_face> f = m_obj->get_mesh()->pick_face(ray);
+	if (f) {
+		m_selection->set(f);
+		m_selection->update_indices();
+		send_to_gpu(m_selection);
+	}
+}
+
+void graffiti_scene::add_to_selection(const glm::vec2& pick_coords)
+{
+	glez::ray ray = get_camera()->cast_ray_to(pick_coords);
+	std::shared_ptr<glez::quad_face> f = m_obj->get_mesh()->pick_face(ray);
+	if (f) {
+		m_selection->add(f);
+		m_selection->update_indices();
+		send_to_gpu(m_selection);
+	}
+}
+
+void graffiti_scene::select_all()
+{
+	m_selection->all();
+	m_selection->update_indices();
+	send_to_gpu(m_selection);
+}
+
+void graffiti_scene::invert_selection()
+{
+	m_selection->inverse();
+	m_selection->update_indices();
+	send_to_gpu(m_selection);
 }
 
 /* Utils */
