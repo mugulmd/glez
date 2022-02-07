@@ -25,7 +25,7 @@ private:
 	void transfer_colors();
 
 public:
-	exp_scene(const char* obj_file_path, const char* img_file_path);
+	exp_scene(const char* obj_file_path, const char* img_file_path, unsigned int max_level);
 	~exp_scene();
 
 private:

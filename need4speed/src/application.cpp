@@ -2,6 +2,7 @@
 #include "GLFW/glfw3.h"
 
 #include <iostream>
+#include <string>
 
 #include "glez.h"
 #include "exp_scene.h"
@@ -28,7 +29,7 @@ static glm::vec2 ref_pos;
 
 int main(int argc, char** argv) 
 {
-    if (argc != 3) return -1;
+    if (argc != 4) return -1;
 
     if (!initGLFW()) return -1;
     if (!initWindow()) return -1;
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
     if (!initGL()) return -1;
 
 	glez::init();
-	scene = new exp_scene(argv[1], argv[2]);
+	scene = new exp_scene(argv[1], argv[2], std::stoi(argv[3]));
     scene->get_camera()->set_proj_props(screenWidth, screenHeight);
 
     while (!glfwWindowShouldClose(window)) {

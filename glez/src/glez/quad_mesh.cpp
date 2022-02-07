@@ -126,14 +126,40 @@ namespace glez {
 
 	void quad_mesh::add_face(std::shared_ptr<quad_face> face)
 	{
-		// TODO : connect half-edges using opposite pointers
+		// connect half-edges using opposite pointers
+		for (size_t i = 0; i < 4; i++) {
+			std::shared_ptr<vertex> v = face->half_edges[i]->base;
+			for (std::shared_ptr<half_edge>& h_out : v->half_edges) {
+				std::shared_ptr<half_edge> h_in = h_out->next->next->next;
+				if (h_in->base == face->half_edges[i]->next->base) {
+					h_in->opposite = face->half_edges[i];
+					face->half_edges[i]->opposite = h_in;
+					break;
+				}
+			}
+		}
+
+		// connect vertices to face using half-edges
+		for (size_t i = 0; i < 4; i++) {
+			face->half_edges[i]->base->half_edges.push_back(face->half_edges[i]);
+		}
 
 		m_faces.push_back(face);
 	}
 
 	void quad_mesh::remove_face(std::shared_ptr<quad_face> face)
 	{
-		// TODO : un-connect half-edges using opposite pointers
+		// un-connect half-edges using opposite pointers
+		for (size_t i = 0; i < 4; i++) {
+			std::shared_ptr<half_edge> h_op = face->half_edges[i]->opposite;
+			h_op->opposite.reset();
+			face->half_edges[i]->opposite.reset();
+		}
+
+		// un-connect vertices from faces using half-edges
+		for (size_t i = 0; i < 4; i++) {
+			face->half_edges[i]->base->half_edges.remove(face->half_edges[i]);
+		}
 
 		m_faces.remove(face);
 	}

@@ -27,7 +27,7 @@ glez::texture* load_texture(const char* imgFilePath);
 float quad_area(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d);
 void make_plane(glez::unwrapped_object* plane);
 
-exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path) : 
+exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path, unsigned int max_level) : 
 	glez::scene()
 {
 	glGenBuffers(4, m_vboIDs);
@@ -63,7 +63,7 @@ exp_scene::exp_scene(const char* obj_file_path, const char* img_file_path) :
 
 	/* Mesh Color object */
 	m_obj_mc = new glez::mc_object();
-	m_obj_mc->set_max_level(5);
+	m_obj_mc->set_max_level(max_level);
 	transfer_res();
 	m_obj_mc->pack_frames();
 	transfer_colors();
@@ -96,8 +96,6 @@ exp_scene::~exp_scene()
 {
 	delete m_obj_unwrapped;
 	delete m_obj_mc;
-	delete m_plane_unwrapped;
-	delete m_plane_mc;
 }
 
 unsigned int exp_scene::res_unwrapped(std::shared_ptr<glez::quad_face> face)

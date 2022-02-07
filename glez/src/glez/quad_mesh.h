@@ -20,6 +20,7 @@ namespace glez {
 	struct GLEZ_API vertex
 	{
 		glm::vec3 position;
+		std::list<std::shared_ptr<half_edge>> half_edges;
 
 		vertex(glm::vec3 _position);
 	};
