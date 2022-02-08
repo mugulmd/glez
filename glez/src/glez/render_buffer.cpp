@@ -19,7 +19,7 @@ namespace glez {
 
 	void render_buffer::store_face(std::shared_ptr<quad_face> face, std::vector<float> tex_coords)
 	{
-		glm::vec3 n = face->normal;
+		glm::vec3& n = face->normal;
 
 		for (size_t i = 0; i < 4; i++) {
 			glm::vec3& p = face->half_edges[i]->base->position;
@@ -51,6 +51,17 @@ namespace glez {
 
 		m_counters[face] = m_face_counter;
 		m_face_counter++;
+	}
+
+	void render_buffer::update_vertex(std::shared_ptr<vertex> vert)
+	{
+		glm::vec3& p = vert->position;
+		for (std::shared_ptr<glez::half_edge>& h : vert->half_edges) {
+			size_t idx = (m_counters[h->face] * 4 + h->local_idx) * (6 + uv_dim());
+			m_vertex_attrib[idx] = p.x; idx++;
+			m_vertex_attrib[idx] = p.y; idx++;
+			m_vertex_attrib[idx] = p.z; idx++;
+		}
 	}
 
 }

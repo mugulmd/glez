@@ -28,11 +28,12 @@ namespace glez {
 	struct GLEZ_API half_edge
 	{
 		std::shared_ptr<quad_face> face;
+		size_t local_idx;
 		std::shared_ptr<vertex> base;
 		std::shared_ptr<half_edge> next;
 		std::shared_ptr<half_edge> opposite;
 
-		half_edge(std::shared_ptr<quad_face> _face, std::shared_ptr<vertex> _base);
+		half_edge(std::shared_ptr<quad_face> _face, size_t idx, std::shared_ptr<vertex> _base);
 	};
 
 	struct GLEZ_API quad_face

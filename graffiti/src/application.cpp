@@ -18,7 +18,7 @@
 
 enum class Activity 
 {
-    Select, Fill, Paint, Extrude, Cut, Displace
+    Select, Paint, Extrude, Cut, Displace
 };
 
 bool initGLFW();
@@ -30,8 +30,6 @@ void scroll_callback(GLFWwindow* _window, double xoffset, double yoffset);
 void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods);
 void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos);
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods);
-void set_activity(Activity _activity);
-std::string activity_to_str(Activity _activity);
 
 static float screenWidth = 900.f;
 static float screenHeight = 600.f;
@@ -39,11 +37,10 @@ static GLFWwindow* window;
 static graffiti_scene* scene;
 
 static Activity activity = Activity::Select;
+std::string activity_name = "Select";
 static glm::vec2 ref_pos;
 static bool is_dragging = false;
 static bool is_rotating = false;
-static float paint_color[4] {1.f, 0.f, 0.f, 1.f};
-static float spray_radius = 0.01f;
 
 int main(int argc, char** argv)
 {
@@ -67,9 +64,10 @@ int main(int argc, char** argv)
         scene->display();
 
         ImGui::Begin("Tools");
-        ImGui::Text(activity_to_str(activity).c_str());
-        ImGui::ColorEdit4("Paint Color", paint_color);
-        ImGui::SliderFloat("Spray Radius", &spray_radius, 0.001f, 0.1f);
+        ImGui::Text(activity_name.c_str());
+        ImGui::ColorEdit4("Paint Color", op_paint::color);
+        ImGui::SliderFloat("Spray Radius", &op_spray::radius, 0.001f, 0.1f);
+        ImGui::SliderInt("N Rays", &op_spray::n_ray, 1, 50);
         ImGui::End();
 
         ImGui::Render();
@@ -159,29 +157,26 @@ void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods
             is_dragging = true;
             double xpos, ypos;
             glfwGetCursorPos(window, &xpos, &ypos);
-            ref_pos.x = 2 * ((float)xpos / screenWidth) - 1;
-            ref_pos.y = 1 - 2 * ((float)ypos / screenHeight);
+            glm::vec2 cur_pos = glm::vec2(2 * ((float)xpos / screenWidth) - 1,
+                1 - 2 * ((float)ypos / screenHeight));
+            ref_pos = cur_pos;
             if (mods == GLFW_MOD_ALT) {
                 is_rotating = true;
             }
             else {
                 switch (activity) {
                 case Activity::Select:
-                    if (mods == GLFW_MOD_SHIFT) scene->add_to_selection(ref_pos);
+                    if (mods == GLFW_MOD_SHIFT) scene->add_to_selection(cur_pos);
                     else scene->set_selection(ref_pos);
                     break;
-                case Activity::Fill:
-                    scene->fill(
-                        ref_pos, 
-                        glm::u8vec4(255 * paint_color[0], 255 * paint_color[1], 255 * paint_color[2], 255 * paint_color[3])
-                    );
-                    break;
                 case Activity::Paint:
-                    scene->spraypaint(
-                        ref_pos, 
-                        glm::u8vec4(255 * paint_color[0], 255 * paint_color[1], 255 * paint_color[2], 255 * paint_color[3]), 
-                        spray_radius
-                    );
+                    scene->paint(cur_pos);
+                    break;
+                case Activity::Extrude:
+                    scene->init_extrude(cur_pos);
+                    break;
+                case Activity::Cut:
+                    scene->cut(cur_pos);
                     break;
                 default:
                     break;
@@ -209,11 +204,13 @@ void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos)
         else {
             switch (activity) {
             case Activity::Paint:
-                scene->spraypaint(
-                    cur_pos, 
-                    glm::u8vec4(255 * paint_color[0], 255 * paint_color[1], 255 * paint_color[2], 255 * paint_color[3]),
-                    spray_radius
-                );
+                scene->paint(cur_pos);
+                break;
+            case Activity::Displace:
+                scene->displace(ref_pos, cur_pos);
+                break;
+            case Activity::Extrude:
+                scene->extrude(ref_pos, cur_pos);
                 break;
             default:
                 break;
@@ -229,71 +226,84 @@ void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mo
         // help
         std::cout << "H: help" << std::endl;
         std::cout << "I: object info" << std::endl;
+        std::cout << "Alt-click-drag: rotate camera" << std::endl;
+        std::cout << "Scroll: zoom in/out" << std::endl;
         std::cout << "S: select mode" << std::endl;
         std::cout << "F: fill mode" << std::endl;
         std::cout << "P: spraypaint mode" << std::endl;
         std::cout << "E: extrude mode" << std::endl;
         std::cout << "C: cut mode" << std::endl;
-        std::cout << "D: displace mode" << std::endl;
+        std::cout << "D: free displace mode" << std::endl;
+        std::cout << "X/Y/Z: X/Y/Z-axis displace mode" << std::endl;
     }
     else if (key == GLFW_KEY_I && action == GLFW_RELEASE) {
-        // object info
-        scene->log_object_info();
+        if (activity == Activity::Select && mods == GLFW_MOD_CONTROL) {
+            // invert selection
+            scene->invert_selection();
+        }
+        else {
+            // object info
+            scene->log_object_info();
+        }
+    }
+    else if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
+        if (activity == Activity::Select && mods == GLFW_MOD_CONTROL) {
+            // select all
+            scene->select_all();
+        }
     }
     else if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
         // select mode
-        set_activity(Activity::Select);
+        activity = Activity::Select;
+        activity_name = "Select";
+        scene->show_selection();
     }
     else if (key == GLFW_KEY_F && action == GLFW_RELEASE) {
         // fill mode
-        set_activity(Activity::Fill);
+        activity = Activity::Paint;
+        activity_name = "Fill";
+        scene->set_painter_fill();
     }
     else if (key == GLFW_KEY_P && action == GLFW_RELEASE) {
         // spraypaint mode
-        set_activity(Activity::Paint);
+        activity = Activity::Paint;
+        activity_name = "Spray Paint";
+        scene->set_painter_spray();
     }
     else if (key == GLFW_KEY_E && action == GLFW_RELEASE) {
         // extrude mode
-        set_activity(Activity::Extrude);
+        activity = Activity::Extrude;
+        activity_name = "Extrude";
+        scene->set_extrude();
     }
     else if (key == GLFW_KEY_C && action == GLFW_RELEASE) {
         // cut mode
-        set_activity(Activity::Cut);
+        activity = Activity::Cut;
+        activity_name = "Cut";
+        scene->set_cut();
     }
     else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
-        // displace mode
-        set_activity(Activity::Displace);
+        // free displace mode
+        activity = Activity::Displace;
+        activity_name = "Displace Free";
+        scene->set_displace_free();
     }
-}
-
-/* Utility */
-
-void set_activity(Activity _activity)
-{
-    activity = _activity;
-}
-
-std::string activity_to_str(Activity _activity)
-{
-    switch (_activity)
-    {
-    case Activity::Select:
-        return "Select";
-        break;
-    case Activity::Fill:
-        return "Fill";
-        break;
-    case Activity::Paint:
-        return "Spray Paint";
-        break;
-    case Activity::Extrude:
-        return "Extrude";
-        break;
-    case Activity::Cut:
-        return "Loop Cut";
-        break;
-    case Activity::Displace:
-        return "Displace";
-        break;
+    else if (key == GLFW_KEY_X && action == GLFW_RELEASE) {
+        // X displace mode
+        activity = Activity::Displace;
+        activity_name = "Displace X";
+        scene->set_displace_x();
+    }
+    else if (key == GLFW_KEY_Y && action == GLFW_RELEASE) {
+        // Y displace mode
+        activity = Activity::Displace;
+        activity_name = "Displace Y";
+        scene->set_displace_y();
+    }
+    else if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
+        // Z displace mode
+        activity = Activity::Displace;
+        activity_name = "Displace Z";
+        scene->set_displace_z();
     }
 }

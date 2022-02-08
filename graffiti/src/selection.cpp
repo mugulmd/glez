@@ -1,6 +1,6 @@
 #include "selection.h"
 
-selection::selection(glez::abs_object* obj) : 
+selection::selection(glez::mc_object* obj) : 
 	m_obj(obj)
 {}
 
@@ -46,6 +46,11 @@ void selection::inverse()
 	}
 
 	m_faces = new_faces;
+}
+
+void selection::clear()
+{
+	m_faces.clear();
 }
 
 void selection::update_indices()

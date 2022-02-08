@@ -36,6 +36,7 @@ namespace glez {
 	public:
 		void init_store(size_t n_faces);
 		void store_face(std::shared_ptr<quad_face> face, std::vector<float> tex_coords);
+		void update_vertex(std::shared_ptr<vertex> vert);
 
 	public:
 		template<class Iterator>

@@ -10,8 +10,8 @@ namespace glez {
 		position(_position)
 	{}
 
-	half_edge::half_edge(std::shared_ptr<quad_face> _face, std::shared_ptr<vertex> _base) : 
-		face(_face), base(_base)
+	half_edge::half_edge(std::shared_ptr<quad_face> _face, size_t idx, std::shared_ptr<vertex> _base) : 
+		face(_face), local_idx(idx), base(_base)
 	{}
 
 	std::shared_ptr<quad_face> quad_face::make_face(std::array<std::shared_ptr<vertex>, 4> corners, glm::vec3 _normal)
@@ -19,7 +19,7 @@ namespace glez {
 		std::shared_ptr<quad_face> f = std::make_shared<quad_face>();
 
 		for (size_t i = 0; i < 4; i++) {
-			f->half_edges[i] = std::make_shared<half_edge>(f, corners[i]);
+			f->half_edges[i] = std::make_shared<half_edge>(f, i, corners[i]);
 		}
 
 		for (size_t i = 0; i < 4; i++) {
