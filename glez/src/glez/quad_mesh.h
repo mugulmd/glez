@@ -34,6 +34,8 @@ namespace glez {
 		std::shared_ptr<half_edge> opposite;
 
 		half_edge(std::shared_ptr<quad_face> _face, size_t idx, std::shared_ptr<vertex> _base);
+
+		glm::vec3 mid_point();
 	};
 
 	struct GLEZ_API quad_face

@@ -48,6 +48,7 @@ namespace glez {
 
 	public:
 		void add_face(std::shared_ptr<quad_face> f, unsigned int res_x, unsigned int res_y);
+		void remove_face(std::shared_ptr<quad_face> f);
 		inline frame& get_frame(std::shared_ptr<quad_face> f) { return m_frames[f]; }
 
 		inline void set_max_level(size_t level) { m_max_level = level; }

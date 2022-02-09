@@ -91,6 +91,12 @@ namespace glez {
 		m_frames[f] = frame(res_x, res_y);
 	}
 
+	void mc_object::remove_face(std::shared_ptr<quad_face> f)
+	{
+		m_mesh->remove_face(f);
+		m_frames.erase(f);
+	}
+
 	void mc_object::pack_frames()
 	{
 		// sort faces by frame size in reverse order

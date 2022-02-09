@@ -14,6 +14,11 @@ namespace glez {
 		face(_face), local_idx(idx), base(_base)
 	{}
 
+	glm::vec3 half_edge::mid_point()
+	{
+		return (base->position + next->base->position) * 0.5f;
+	}
+
 	std::shared_ptr<quad_face> quad_face::make_face(std::array<std::shared_ptr<vertex>, 4> corners, glm::vec3 _normal)
 	{
 		std::shared_ptr<quad_face> f = std::make_shared<quad_face>();
@@ -149,13 +154,6 @@ namespace glez {
 
 	void quad_mesh::remove_face(std::shared_ptr<quad_face> face)
 	{
-		// un-connect half-edges using opposite pointers
-		for (size_t i = 0; i < 4; i++) {
-			std::shared_ptr<half_edge> h_op = face->half_edges[i]->opposite;
-			h_op->opposite.reset();
-			face->half_edges[i]->opposite.reset();
-		}
-
 		// un-connect vertices from faces using half-edges
 		for (size_t i = 0; i < 4; i++) {
 			face->half_edges[i]->base->half_edges.remove(face->half_edges[i]);

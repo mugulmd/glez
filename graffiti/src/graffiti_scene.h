@@ -56,16 +56,10 @@ public:
 
 	/* Modeling Operations */
 private:
-	op_displace* m_displacer;
 	op_extrude* m_extruder;
 	op_cut* m_cutter;
 
 public:
-	void set_displace_free();
-	void set_displace_x();
-	void set_displace_y();
-	void set_displace_z();
-	void displace(const glm::vec2& pick_start, const glm::vec2& pick_end);
 	void set_extrude();
 	void init_extrude(const glm::vec2& pick_coords);
 	void extrude(const glm::vec2& pick_start, const glm::vec2& pick_end);

@@ -18,7 +18,7 @@
 
 enum class Activity 
 {
-    Select, Paint, Extrude, Cut, Displace
+    Select, Paint, Extrude, Cut
 };
 
 bool initGLFW();
@@ -206,9 +206,6 @@ void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos)
             case Activity::Paint:
                 scene->paint(cur_pos);
                 break;
-            case Activity::Displace:
-                scene->displace(ref_pos, cur_pos);
-                break;
             case Activity::Extrude:
                 scene->extrude(ref_pos, cur_pos);
                 break;
@@ -233,8 +230,6 @@ void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mo
         std::cout << "P: spraypaint mode" << std::endl;
         std::cout << "E: extrude mode" << std::endl;
         std::cout << "C: cut mode" << std::endl;
-        std::cout << "D: free displace mode" << std::endl;
-        std::cout << "X/Y/Z: X/Y/Z-axis displace mode" << std::endl;
     }
     else if (key == GLFW_KEY_I && action == GLFW_RELEASE) {
         if (activity == Activity::Select && mods == GLFW_MOD_CONTROL) {
@@ -281,29 +276,5 @@ void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mo
         activity = Activity::Cut;
         activity_name = "Cut";
         scene->set_cut();
-    }
-    else if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
-        // free displace mode
-        activity = Activity::Displace;
-        activity_name = "Displace Free";
-        scene->set_displace_free();
-    }
-    else if (key == GLFW_KEY_X && action == GLFW_RELEASE) {
-        // X displace mode
-        activity = Activity::Displace;
-        activity_name = "Displace X";
-        scene->set_displace_x();
-    }
-    else if (key == GLFW_KEY_Y && action == GLFW_RELEASE) {
-        // Y displace mode
-        activity = Activity::Displace;
-        activity_name = "Displace Y";
-        scene->set_displace_y();
-    }
-    else if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
-        // Z displace mode
-        activity = Activity::Displace;
-        activity_name = "Displace Z";
-        scene->set_displace_z();
     }
 }

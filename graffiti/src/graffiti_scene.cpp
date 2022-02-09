@@ -38,7 +38,6 @@ graffiti_scene::graffiti_scene() :
 
 	/* Painting and Modeling Operations */
 	m_painter = nullptr;
-	m_displacer = nullptr;
 	m_extruder = nullptr;
 	m_cutter = nullptr;
 }
@@ -49,7 +48,6 @@ graffiti_scene::~graffiti_scene()
 	delete m_renderer;
 	delete m_selection;
 	if (m_painter) delete m_painter;
-	if (m_displacer) delete m_displacer;
 	if (m_extruder) delete m_extruder;
 	if (m_cutter) delete m_cutter;
 }
@@ -173,42 +171,6 @@ void graffiti_scene::paint(const glm::vec2& pick_coords)
 {
 	m_painter->apply(get_camera(), pick_coords);
 	m_renderer->send_to_gpu(m_obj->get_texture());
-}
-
-void graffiti_scene::set_displace_free()
-{
-	m_displacer = new op_displace_free(m_selection);
-	m_show_selection = true;
-}
-
-void graffiti_scene::set_displace_x()
-{
-	m_displacer = new op_displace_axis(m_selection, glm::vec3(1, 0, 0));
-	m_show_selection = true;
-}
-
-void graffiti_scene::set_displace_y()
-{
-	m_displacer = new op_displace_axis(m_selection, glm::vec3(0, 1, 0));
-	m_show_selection = true;
-}
-
-void graffiti_scene::set_displace_z()
-{
-	m_displacer = new op_displace_axis(m_selection, glm::vec3(0, 0, 1));
-	m_show_selection = true;
-}
-
-void graffiti_scene::displace(const glm::vec2& pick_start, const glm::vec2& pick_end)
-{
-	m_displacer->apply(get_camera(), pick_start, pick_end);
-
-	for (const std::shared_ptr<glez::quad_face>& f : m_selection->get_faces()) {
-		for (size_t i = 0; i < 4; i++) {
-			m_obj->get_render_buffer()->update_vertex(f->half_edges[i]->base);
-		}
-	}
-	m_renderer->send_to_gpu(m_obj->get_render_buffer());
 }
 
 void graffiti_scene::set_extrude()
