@@ -89,4 +89,15 @@ namespace glez {
 		return ray(m_position, dir);
 	}
 
+	void camera::log_info()
+	{
+		GLEZ_TRACE(
+			"camera: position=({}, {}, {}), target=({}, {}, {}), up=({}, {}, {}), width={}, height={}, fov={}, z_near={}, z_far={}", 
+			m_position.x, m_position.y, m_position.z, 
+			m_target.x, m_target.y, m_target.z, 
+			m_up.x, m_up.y, m_up.z, 
+			m_width, m_height, m_fov, m_near, m_far
+		);
+	}
+
 }

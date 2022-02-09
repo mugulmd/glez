@@ -26,7 +26,7 @@ graffiti_scene::graffiti_scene() :
 	m_obj->create_uv_layout();
 	m_renderer->send_to_gpu(m_obj->get_render_buffer());
 
-	glm::u8vec4 base_color(200, 200, 200, 255);
+	glm::u8vec4 base_color(100, 100, 100, 255);
 	for (std::shared_ptr<glez::quad_face>& f : m_obj->get_mesh()->get_faces()) {
 		m_obj->fill(f, base_color);
 	}

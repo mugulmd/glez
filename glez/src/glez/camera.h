@@ -41,6 +41,8 @@ namespace glez {
 		glm::vec3 to_world(glm::vec2 coords);
 		ray cast_ray_to(glm::vec2 coords);
 
+		void log_info();
+
 	};
 
 }

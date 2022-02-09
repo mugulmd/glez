@@ -176,6 +176,8 @@ namespace glez {
 			}
 			m_buffer->store_face(f, face_uv);
 		}
+
+		GLEZ_TRACE("created uv-layout for mesh color object");
 	}
 
 	void mc_object::build_mipmap()

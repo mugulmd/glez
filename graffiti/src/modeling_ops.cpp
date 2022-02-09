@@ -146,7 +146,7 @@ void op_extrude::init(glez::camera* cam, const glm::vec2& pick_coords)
 	}
 
 	// init texture on new faces
-	glm::u8vec4 base_color(200, 200, 200, 255);
+	glm::u8vec4 base_color(100, 100, 100, 255);
 	for (size_t i = 0; i < 4; i++) {
 		std::shared_ptr<glez::quad_face> f = loop_faces[i];
 		m_obj->fill(f, base_color);

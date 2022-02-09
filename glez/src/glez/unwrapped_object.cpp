@@ -33,6 +33,8 @@ namespace glez {
 			}
 			m_buffer->store_face(f, face_uv);
 		}
+
+		GLEZ_TRACE("created uv-layout for unwrapped object");
 	}
 
 }

@@ -31,8 +31,8 @@ void mouse_button_callback(GLFWwindow* _window, int button, int action, int mods
 void cursor_position_callback(GLFWwindow* _window, double xpos, double ypos);
 void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mods);
 
-static float screenWidth = 900.f;
-static float screenHeight = 600.f;
+static float screenWidth = 1200.f;
+static float screenHeight = 900.f;
 static GLFWwindow* window;
 static graffiti_scene* scene;
 
@@ -222,7 +222,7 @@ void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mo
     if (key == GLFW_KEY_H && action == GLFW_RELEASE) {
         // help
         std::cout << "H: help" << std::endl;
-        std::cout << "I: object info" << std::endl;
+        std::cout << "I: info" << std::endl;
         std::cout << "Alt-click-drag: rotate camera" << std::endl;
         std::cout << "Scroll: zoom in/out" << std::endl;
         std::cout << "S: select mode" << std::endl;
@@ -238,6 +238,7 @@ void key_callback(GLFWwindow* _window, int key, int scancode, int action, int mo
         }
         else {
             // object info
+            scene->get_camera()->log_info();
             scene->log_object_info();
         }
     }
