@@ -78,8 +78,8 @@ void op_extrude::init(glez::camera* cam, const glm::vec2& pick_coords)
 
 		loop_normals[i] = glm::normalize(
 			glm::cross(
-				h->next->base->position - h->base->position,
-				h->face->normal
+				h->face->normal, 
+				h->next->base->position - h->base->position
 			)
 		);
 	}
